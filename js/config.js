@@ -9,8 +9,8 @@
 // ── Supabase Config ──────────────────────────────────────────
 // Replace these with your actual Supabase project values
 // Found in: Supabase Dashboard → Settings → API
-const SUPABASE_URL  = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON = 'YOUR_ANON_KEY_HERE';
+const SUPABASE_URL  = 'https://qycbpiotmgwjltduzlvf.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_4AozaOFzHIkWI2p0uVNByg_lbMvckjv';
 
 // Fallback Google Sheets Apps Script URL for Local Mock Mode
 const FALLBACK_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvQQcUftmeXPn6u04AzDSyUA9ZYpQIRN1R1Es04pp0DJUu3fNn_te2NEkAgJsBNUblZQ/exec';

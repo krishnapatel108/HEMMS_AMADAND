@@ -1,0 +1,13 @@
+# System files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE / Editor config
+.vscode/
+.idea/
+
+# Local backups
+index_original_backup.html
+jsonAdminOperator.txt.bak
+*.log

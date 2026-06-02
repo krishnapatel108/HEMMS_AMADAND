@@ -1,0 +1,861 @@
+/* ═══════════════════════════════════════════════════════════════
+   HEMM Report — theme.css
+   Master design system — shared across all pages
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Fonts ──────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Tiro+Devanagari+Hindi&display=swap');
+
+/* ── CSS Custom Properties ──────────────────────────────────── */
+:root {
+  --or: #FF6B35;
+  --gr: #22c55e;
+  --re: #ef4444;
+  --ye: #f59e0b;
+  --bg: #0a0a0a;
+  --c1: #141414;
+  --c2: #1c1c1c;
+  --c3: #252525;
+  --bdr: #2a2a2a;
+  --txt: #efefef;
+  --mut: #606060;
+
+  /* Fonts */
+  --h: 'Tiro Devanagari Hindi', serif;
+  --cd: 'Outfit', sans-serif;
+  --b: 'Outfit', sans-serif;
+
+  /* Admin accent */
+  --purple: #9333ea;
+  --purple-light: #c084fc;
+  --purple-dark: #7c3aed;
+  --purple-bg: #2d1f3d;
+}
+
+/* ── Global Reset ───────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  background: #0a0a0a;
+  background-image: url('../bg_tipper.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--txt);
+  font-family: var(--b);
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 0; }
+
+.hidden { display: none !important; }
+
+/* ── Body Background Ambiance ───────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Loading Screen ─────────────────────────────────────────── */
+#load-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 999;
+  transition: opacity .5s;
+}
+#load-screen.hide { opacity: 0; pointer-events: none; }
+
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--c3);
+  border-top-color: var(--or);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+.load-t {
+  font-family: var(--cd);
+  font-size: 16px;
+  color: var(--mut);
+  letter-spacing: 1px;
+}
+
+/* ── Header (shared layout) ─────────────────────────────────── */
+.hdr {
+  background: var(--c1);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid var(--or);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.logo {
+  font-family: var(--cd);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--or);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.logo-s {
+  font-size: 10px;
+  color: var(--mut);
+  letter-spacing: 1.5px;
+  margin-top: 3px;
+  font-family: var(--b);
+}
+
+/* ── Connection Dot ─────────────────────────────────────────── */
+.conn-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--ye);
+  margin-right: 4px;
+  transition: background .5s;
+}
+.conn-dot.ok { background: var(--gr); }
+.conn-dot.err { background: var(--re); }
+
+/* ── Buttons — Large Action ─────────────────────────────────── */
+.btn {
+  width: 100%;
+  border: none;
+  padding: 20px 16px;
+  font-family: var(--cd);
+  font-size: 24px;
+  font-weight: 900;
+  border-radius: 14px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: transform .1s, opacity .1s;
+}
+.btn:active { transform: scale(.97); }
+
+.btn.or {
+  background: var(--or);
+  color: #000;
+  box-shadow: 0 6px 24px rgba(255,107,53,.3);
+}
+.btn.wa {
+  background: #25D366;
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(37,211,102,.3);
+}
+.btn.dk {
+  background: var(--c2);
+  color: #777;
+  border: 1px solid var(--bdr);
+  box-shadow: none;
+}
+
+/* ── Buttons — Navigation ───────────────────────────────────── */
+.nav-row { display: flex; gap: 10px; width: 100%; }
+
+.back {
+  background: var(--c2);
+  color: #888;
+  border: 1.5px solid var(--bdr);
+  padding: 15px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: var(--h);
+  font-size: 16px;
+  flex: 1;
+}
+
+.nxt {
+  background: var(--or);
+  color: #000;
+  border: none;
+  padding: 15px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: var(--h);
+  font-size: 17px;
+  font-weight: 700;
+  flex: 2;
+  transition: opacity .2s;
+}
+.nxt:disabled { opacity: .3; cursor: default; }
+
+.snd {
+  background: var(--gr);
+  color: #000;
+  border: none;
+  padding: 15px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: var(--h);
+  font-size: 17px;
+  font-weight: 700;
+  flex: 2;
+}
+
+/* ── Small UI Buttons ───────────────────────────────────────── */
+.eng-btn, .exit-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: var(--mut);
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--b);
+}
+.exit-btn {
+  background: var(--c2);
+  color: #aaa;
+  border-color: var(--bdr);
+}
+
+/* ── Progress Steps ─────────────────────────────────────────── */
+.prog-wrap { display: flex; gap: 5px; width: 100%; }
+.prog-s {
+  flex: 1; height: 4px;
+  border-radius: 4px;
+  background: var(--c3);
+  transition: background .3s;
+}
+.prog-s.done { background: var(--or); }
+.prog-s.active { background: var(--or); opacity: .5; }
+
+/* ── Step Pill ──────────────────────────────────────────────── */
+.step-pill {
+  background: var(--c2);
+  color: var(--or);
+  padding: 5px 18px;
+  border-radius: 20px;
+  font-family: var(--cd);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* ── Question Headers ───────────────────────────────────────── */
+.q-h {
+  font-family: var(--h);
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.5;
+}
+.q-e {
+  font-family: var(--cd);
+  font-size: 13px;
+  color: var(--mut);
+  text-align: center;
+  letter-spacing: .5px;
+}
+.q-sub {
+  font-family: var(--h);
+  font-size: 14px;
+  color: var(--mut);
+  text-align: center;
+  line-height: 1.5;
+  margin-top: -6px;
+}
+
+/* ── Cards ──────────────────────────────────────────────────── */
+.card {
+  background: var(--c1);
+  border: 1.5px solid var(--bdr);
+  border-radius: 16px;
+  padding: 14px;
+  animation: fadeIn .3s ease;
+}
+
+/* ── Auth Badges (shared by dashboard & admin) ──────────────── */
+.auth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 900;
+  font-family: var(--cd);
+  letter-spacing: .5px;
+}
+.auth-ok {
+  background: rgba(34,197,94,.18);
+  color: #22c55e;
+  border: 1px solid rgba(34,197,94,.3);
+}
+.auth-no {
+  background: rgba(239,68,68,.18);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,.3);
+}
+.auth-unk {
+  background: rgba(96,96,96,.25);
+  color: #888;
+  border: 1px solid #333;
+}
+
+/* ── Status Pills ───────────────────────────────────────────── */
+.spill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--cd);
+  letter-spacing: .5px;
+}
+.sp-p { background: var(--or); color: #000; }
+.sp-r { background: var(--ye); color: #000; }
+.sp-d { background: var(--gr); color: #000; }
+
+/* ── Stats Row ──────────────────────────────────────────────── */
+.stat-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 4px;
+  flex-shrink: 0;
+}
+.stat-box {
+  flex: 1;
+  background: var(--c1);
+  border: 1px solid var(--bdr);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.stat-n {
+  font-family: var(--cd);
+  font-size: 26px;
+  font-weight: 900;
+}
+.stat-l {
+  font-family: var(--h);
+  font-size: 11px;
+  color: var(--mut);
+  margin-top: 2px;
+}
+
+/* ── Filter Pills ───────────────────────────────────────────── */
+.filt-row {
+  display: flex;
+  gap: 7px;
+  padding: 8px 12px 2px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filt-row::-webkit-scrollbar { display: none; }
+
+.fb {
+  background: var(--c2);
+  border: 1px solid var(--bdr);
+  color: var(--mut);
+  padding: 5px 13px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--b);
+  transition: all .15s;
+}
+.fb.fa {
+  background: var(--or);
+  color: #000;
+  border-color: var(--or);
+  font-weight: 700;
+}
+
+/* ── Modal Overlay ──────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+.modal-overlay.center { align-items: center; }
+
+.modal-card {
+  background: var(--c1);
+  border: 1.5px solid var(--bdr);
+  border-radius: 20px 20px 16px 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  animation: slideUp .3s ease;
+}
+
+/* ── DB Error Banner ────────────────────────────────────────── */
+.db-banner {
+  width: 100%;
+  background: #1a0808;
+  border: 1px solid var(--re);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: var(--h);
+  font-size: 13px;
+  color: #f87171;
+  line-height: 1.6;
+}
+.db-banner b {
+  font-family: var(--cd);
+  letter-spacing: .5px;
+}
+
+/* ── Live Dot ───────────────────────────────────────────────── */
+.live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  background: var(--gr);
+  border-radius: 50%;
+  margin-right: 5px;
+  animation: blink 1.5s infinite;
+}
+
+/* ── Keyframe Animations ────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(60px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.4); }
+  50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+
+@keyframes fl {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+/* ── Claymorphism Styles ────────────────────────────────────── */
+.clay-card, .card, .mach-btn, .feat-btn, .numpad button, .conf-card, .auth-card, .done-card, .login-card, .admin-login-card, .op-modal-card, .admin-card, .stat-box, .cred-item, .v-row textarea, .rcard, .admin-rcard {
+  background: rgba(30, 30, 30, 0.5) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 
+    0 12px 28px rgba(0, 0, 0, 0.35),
+    inset -4px -4px 10px rgba(0, 0, 0, 0.4),
+    inset 4px 4px 10px rgba(255, 255, 255, 0.05) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Active/selected states for cards */
+.mach-btn.sel, .feat-btn.sel {
+  background: rgba(255, 107, 53, 0.15) !important;
+  border-color: var(--or) !important;
+  box-shadow: 
+    0 0 20px rgba(255, 107, 53, 0.3),
+    inset -4px -4px 10px rgba(0, 0, 0, 0.3),
+    inset 4px 4px 10px rgba(255, 107, 53, 0.2) !important;
+}
+
+/* Claymorphic Buttons */
+.btn.or, .nxt, .snd, .btn-auth-go, .staff-btn-submit {
+  background: var(--or) !important;
+  color: #000 !important;
+  border-radius: 16px !important;
+  border: none !important;
+  font-family: var(--cd);
+  font-weight: 800;
+  box-shadow: 
+    0 10px 20px rgba(255, 107, 53, 0.25),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.3),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.45) !important;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+.btn.or:active, .nxt:active, .snd:active, .btn-auth-go:active, .staff-btn-submit:active {
+  transform: scale(0.97);
+  box-shadow: 
+    0 4px 8px rgba(255, 107, 53, 0.15),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Claymorphic Green Button (e.g. resolve, share) */
+.btn.wa, .btn.gr {
+  background: #22c55e !important;
+  color: #000 !important;
+  border-radius: 16px !important;
+  border: none !important;
+  box-shadow: 
+    0 10px 20px rgba(34, 197, 94, 0.25),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.3),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.45) !important;
+}
+.btn.wa:active, .btn.gr:active {
+  transform: scale(0.97);
+  box-shadow: 
+    0 4px 8px rgba(34, 197, 94, 0.15),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Claymorphic Back/Default Buttons */
+.back, .btn.dk, .info-close, .exit-btn, .btn-auth-skip, .tool-btn {
+  background: rgba(50, 50, 50, 0.7) !important;
+  color: #ccc !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 
+    0 6px 15px rgba(0, 0, 0, 0.3),
+    inset -3px -3px 6px rgba(0, 0, 0, 0.4),
+    inset 3px 3px 6px rgba(255, 255, 255, 0.1) !important;
+}
+.back:active, .btn.dk:active, .info-close:active, .exit-btn:active, .btn-auth-skip:active {
+  transform: scale(0.97);
+  box-shadow: 
+    0 3px 6px rgba(0, 0, 0, 0.2),
+    inset -1.5px -1.5px 3px rgba(0, 0, 0, 0.4),
+    inset 1.5px 1.5px 3px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Claymorphic Inputs */
+.auth-inp, .staff-inp, .admin-inp {
+  background: rgba(20, 20, 20, 0.6) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 12px !important;
+  box-shadow: 
+    inset 2px 2px 6px rgba(0, 0, 0, 0.5),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.03) !important;
+  color: #fff !important;
+  transition: border-color 0.2s;
+}
+.auth-inp:focus, .staff-inp:focus, .admin-inp:focus {
+  border-color: var(--or) !important;
+}
+
+/* Claymorphic Filter pills */
+.fb {
+  background: rgba(40, 40, 40, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  color: #888 !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.2),
+    inset -2px -2px 5px rgba(0, 0, 0, 0.4),
+    inset 2px 2px 5px rgba(255, 255, 255, 0.05) !important;
+}
+.fb.fa {
+  background: var(--or) !important;
+  color: #000 !important;
+  border-color: var(--or) !important;
+  box-shadow: 
+    0 4px 10px rgba(255, 107, 53, 0.2),
+    inset -2px -2px 5px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 5px rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ── Staff Dashboard Tabbed Interface ────────────────────────── */
+.dash-hdr {
+  background: rgba(20, 20, 20, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 2.5px solid var(--or);
+  padding: 14px 16px 0;
+  flex-shrink: 0;
+  z-index: 10;
+  width: 100%;
+}
+.dash-hdr-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.dash-title {
+  font-family: var(--cd);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--or);
+  letter-spacing: 1.5px;
+}
+.dash-sub {
+  font-size: 10px;
+  color: var(--mut);
+  letter-spacing: 1px;
+}
+.dash-tabs {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+}
+.dash-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--mut);
+  padding: 10px 5px;
+  font-size: 13px;
+  font-family: var(--cd);
+  font-weight: 700;
+  letter-spacing: .5px;
+  cursor: pointer;
+  border-radius: 12px 12px 0 0;
+  transition: all .2s;
+  text-align: center;
+}
+.dash-tab.active {
+  background: rgba(30, 30, 30, 0.5);
+  color: var(--or);
+  border-bottom: 3px solid var(--or);
+}
+.dash-panels {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 12px 40px;
+  width: 100%;
+}
+.dash-panel {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+.dash-panel.active {
+  display: flex;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .q-h { font-size: 28px; }
+  .btn { font-size: 22px; padding: 18px 16px; }
+}
+
+/* ── Staff Login Modal ─────────────────────────────────────── */
+.staff-login-card {
+  background: rgba(25, 25, 25, 0.6) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 24px !important;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    inset -4px -4px 10px rgba(0, 0, 0, 0.4),
+    inset 4px 4px 10px rgba(255, 255, 255, 0.05) !important;
+  animation: slideUp 0.3s ease;
+  text-align: center;
+  position: relative;
+}
+
+.staff-login-title {
+  font-family: var(--cd);
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--or);
+  letter-spacing: 2px;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+
+.staff-login-sub {
+  font-family: var(--h);
+  font-size: 13px;
+  color: var(--mut);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.staff-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.staff-field label {
+  font-family: var(--b);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mut);
+  letter-spacing: .8px;
+}
+
+.staff-inp {
+  padding: 12px 14px;
+  font-size: 15px;
+  outline: none;
+  width: 100%;
+}
+
+.staff-success-msg {
+  font-family: var(--b);
+  font-size: 12px;
+  color: var(--re);
+  margin-top: 10px;
+  min-height: 18px;
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.staff-success-msg.on {
+  opacity: 1;
+}
+
+/* ── Staff Attempt Dots ────────────────────────────────────── */
+.staff-attempt-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 16px;
+}
+
+.staff-att-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #333;
+  border: 1.5px solid #444;
+  transition: background 0.3s, transform 0.3s;
+}
+
+.staff-att-dot.used {
+  background: var(--re);
+  border-color: var(--re);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+.staff-att-dot.ok {
+  background: var(--gr);
+  border-color: var(--gr);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+}
+
+/* ── Staff Lock Banner ─────────────────────────────────────── */
+.staff-lock-banner {
+  display: none;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  font-family: var(--h);
+  font-size: 13px;
+  color: #f87171;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+.staff-lock-banner.on {
+  display: block;
+}
+
+#staff-lock-timer {
+  font-family: var(--cd);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--re);
+  display: inline-block;
+  margin-left: 4px;
+}
+
+/* ── Claymorphic Purple Button (Admin Panel Override) ──────── */
+.admin-btn-purple {
+  background: linear-gradient(135deg, var(--purple-dark), var(--purple)) !important;
+  color: #fff !important;
+  border-radius: 16px !important;
+  border: none !important;
+  font-family: var(--cd);
+  font-weight: 800;
+  box-shadow: 
+    0 10px 20px rgba(147, 51, 234, 0.25),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.3),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.45) !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+.admin-btn-purple:active {
+  transform: scale(0.97);
+  box-shadow: 
+    0 4px 8px rgba(147, 51, 234, 0.15),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.45) !important;
+}
+
+/* ── Claymorphic Tool Button Active Override ──────────────── */
+.tool-btn.active {
+  background: var(--or) !important;
+  color: #000 !important;
+  border-color: var(--or) !important;
+  box-shadow: 
+    0 4px 10px rgba(255, 107, 53, 0.2),
+    inset -2px -2px 5px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 5px rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ── Dynamic Tab Slide Transitions ────────────────────────── */
+.dash-panel {
+  animation: fadeIn 0.4s ease;
+}
+
+/* ── Glowing Matrix Indicators ────────────────────────────── */
+.safety-grid td.feature-cell {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border: 1px solid rgba(34, 197, 94, 0.2) !important;
+  color: #4ade80 !important;
+  font-weight: 700;
+  box-shadow: inset 0 0 6px rgba(34, 197, 94, 0.2);
+}
+.safety-grid td.feature-cell.has-issue {
+  background: rgba(239, 68, 68, 0.18) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  color: #f87171 !important;
+  font-weight: 900;
+  box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.3), 0 0 4px rgba(239, 68, 68, 0.1);
+}
+

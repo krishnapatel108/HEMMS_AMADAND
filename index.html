@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="description" content="HEMM सुरक्षा रिपोर्ट प्रणाली - आमाडांड खदान। operators to report safety issues on Volvo, SANY, BharatBenz, TATA Tippers.">
+  <title>HEMM रिपोर्ट — Amadand Mine</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/operator.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <!-- ═══ LOADING SCREEN ═══════════════════════════════════════ -->
+  <div id="load-screen">
+    <div style="font-size: 52px; animation: fl 2s ease-in-out infinite;">⛏</div>
+    <div class="spinner"></div>
+    <div class="load-t" id="load-msg">खदान डेटाबेस से जुड़ रहे हैं... Connecting...</div>
+  </div>
+
+  <!-- ═══ MAIN APP CONTAINER ═══════════════════════════════════ -->
+  <div id="root">
+    
+    <!-- ── Header ────────────────────────────────────────────── -->
+    <header class="hdr">
+      <div>
+        <h1 class="logo">⛏ HEMM रिपोर्ट</h1>
+        <div class="logo-s">
+          <span class="conn-dot" id="conn-dot"></span>
+          AMADAND MINE · LIVE
+        </div>
+      </div>
+      <div id="hdr-right" class="hdr-right">
+        <button id="engineer-login-btn" class="eng-btn" onclick="showStaffLoginModal()">
+          Engineer/Admin Login
+        </button>
+      </div>
+    </header>
+
+    <!-- ── Home Screen ────────────────────────────────────────── -->
+    <main class="screen on" id="s-home">
+      <div style="height: 6px;"></div>
+      <div class="truck" aria-hidden="true">🚛</div>
+      <h2 class="home-t">TIPPER PROBLEM?</h2>
+      <p class="home-h">
+        क्या आपकी मशीन में कोई खराबी है?<br>सीधे Engineer को रिपोर्ट करें।
+      </p>
+      <button id="start-report-btn" class="btn or" onclick="goTo('s-mach')">
+        🔔 खराबी रिपोर्ट करें / Report Fault
+      </button>
+      <div class="safe">
+        <span class="safe-ico" aria-hidden="true">🛡️</span>
+        <span class="safe-txt">
+          <b>गोपनीय सुरक्षा रिपोर्ट:</b> DGMS सुरक्षा नियमों के तहत सीधे अभियंताओं को रिपोर्ट भेजी जाती है।
+        </span>
+      </div>
+    </main>
+
+    <!-- ── Step 1: Machine Selection ───────────────────────────── -->
+    <section class="screen" id="s-mach">
+      <div class="step-pill">STEP 1 OF 4</div>
+      <div class="prog-wrap" aria-hidden="true">
+        <div class="prog-s active"></div>
+        <div class="prog-s"></div>
+        <div class="prog-s"></div>
+        <div class="prog-s"></div>
+      </div>
+      <h2 class="q-h">मशीन का नाम चुनें</h2>
+      <p class="q-e">SELECT MACHINE BRAND</p>
+      
+      <div class="mach-list" id="mach-list">
+        <!-- Built dynamically from MACHINES config by operator.js -->
+      </div>
+
+      <div class="nav-row">
+        <button id="btn-mach-back" class="back" onclick="goTo('s-home')">← वापस / Back</button>
+        <button id="btn-mach-nxt" class="nxt" disabled onclick="goTo('s-num')">आगे → / Next</button>
+      </div>
+    </section>
+
+    <!-- ── Step 2: Door Number Numpad ─────────────────────────── -->
+    <section class="screen" id="s-num">
+      <div class="step-pill">STEP 2 OF 4</div>
+      <div class="prog-wrap" aria-hidden="true">
+        <div class="prog-s done"></div>
+        <div class="prog-s active"></div>
+        <div class="prog-s"></div>
+        <div class="prog-s"></div>
+      </div>
+      <div class="t-pill" id="t-pill">🚛 —</div>
+      <h2 class="q-h">दरवाज़े का नंबर डालें</h2>
+      <p class="q-e">ENTER DOOR / TIPPER NUMBER</p>
+      
+      <div class="t-disp" id="t-disp" aria-live="polite">—</div>
+      
+      <div class="numpad">
+        <button class="nk" onclick="np(1)">1</button>
+        <button class="nk" onclick="np(2)">2</button>
+        <button class="nk" onclick="np(3)">3</button>
+        <button class="nk" onclick="np(4)">4</button>
+        <button class="nk" onclick="np(5)">5</button>
+        <button class="nk" onclick="np(6)">6</button>
+        <button class="nk" onclick="np(7)">7</button>
+        <button class="nk" onclick="np(8)">8</button>
+        <button class="nk" onclick="np(9)">9</button>
+        <button class="nk cl" onclick="np('C')">CLR</button>
+        <button class="nk" onclick="np(0)">0</button>
+        <button class="nk dl" onclick="np('⌫')">⌫</button>
+      </div>
+
+      <div class="nav-row">
+        <button id="btn-num-back" class="back" onclick="goTo('s-mach')">← वापस / Back</button>
+        <button id="btn-num-nxt" class="nxt" disabled onclick="goTo('s-prob')">आगे → / Next</button>
+      </div>
+    </section>
+
+    <!-- ── Step 3: DGMS Features Selection ────────────────────── -->
+    <section class="screen" id="s-prob">
+      <div class="step-pill">STEP 3 OF 4</div>
+      <div class="prog-wrap" aria-hidden="true">
+        <div class="prog-s done"></div>
+        <div class="prog-s done"></div>
+        <div class="prog-s active"></div>
+        <div class="prog-s"></div>
+      </div>
+      <div class="id-pill" id="prob-pill">🚛 —</div>
+      
+      <div class="sec-lbl">
+        <div class="sec-h">⚠️ खराब सुरक्षा उपकरण चुनें</div>
+        <div class="sec-e">DGMS SAFETY FEATURES — SELECT FAULTY ITEMS</div>
+      </div>
+
+      <div class="feat-count" id="feat-count"></div>
+      
+      <div class="feat-grid" id="feat-grid">
+        <!-- Built dynamically from DGMS config by operator.js -->
+      </div>
+
+      <div class="voice-box">
+        <label for="note-ta" class="v-lbl">🎤 कोई और समस्या? बोलें या लिखें (Optional):</label>
+        <div class="v-row">
+          <textarea class="note-ta" id="note-ta" placeholder="जैसे: इंजन में असामान्य आवाज़, तेल रिसाव आदि..." maxlength="300" rows="2"></textarea>
+          <button id="mic-btn" class="mic-btn" onclick="toggleMic()" aria-label="Voice Input">
+            🎤<br><span style="font-size: 9px; font-family: var(--b);">बोलें</span>
+          </button>
+        </div>
+        <div class="listen-tag hidden" id="listen-tag">🎙 सुन रहे हैं… अभी बोलें</div>
+      </div>
+
+      <div class="nav-row">
+        <button id="btn-prob-back" class="back" onclick="goTo('s-num')">← वापस / Back</button>
+        <button id="btn-prob-nxt" class="nxt" disabled onclick="goTo('s-conf')">आगे → / Next</button>
+      </div>
+    </section>
+
+    <!-- ── Step 4: Confirmation Screen ────────────────────────── -->
+    <section class="screen" id="s-conf">
+      <div class="step-pill">जांचें और भेजें</div>
+      <div class="prog-wrap" aria-hidden="true">
+        <div class="prog-s done"></div>
+        <div class="prog-s done"></div>
+        <div class="prog-s done"></div>
+        <div class="prog-s active"></div>
+      </div>
+      <h2 class="q-h">भेजने से पहले जांचें</h2>
+      <p class="q-e">VERIFY REPORT DETAILS</p>
+      
+      <div class="conf-card">
+        <div class="conf-id" id="conf-id">—</div>
+        <div class="conf-m" id="conf-m">—</div>
+        <div class="conf-div" aria-hidden="true"></div>
+        <div id="conf-feat">
+          <!-- Populated dynamically by operator.js -->
+        </div>
+        <div class="conf-div" aria-hidden="true"></div>
+        <div class="conf-item">
+          <span class="conf-item-ico" aria-hidden="true">📝</span>
+          <span id="conf-note">कोई अतिरिक्त नोट नहीं / No additional comments</span>
+        </div>
+      </div>
+      
+      <p class="q-sub">क्या सारी जानकारी सही है?</p>
+      
+      <div class="nav-row">
+        <button id="btn-conf-back" class="back" onclick="goTo('s-prob')">← बदलें / Edit</button>
+        <button id="btn-conf-send" class="snd" onclick="goToOpAuth()">✅ रिपोर्ट भेजें → / Submit</button>
+      </div>
+    </section>
+
+    <!-- ── Operator Verification Screen ───────────────────────── -->
+    <section class="screen" id="s-auth">
+      <h2 class="auth-title">🪪 ऑपरेटर सत्यापन / Operator Login</h2>
+      <p class="auth-sub">रिपोर्ट भेजने से पहले अपनी पहचान सत्यापित करें</p>
+      
+      <div class="auth-try-row" aria-label="Verification attempts remaining">
+        <div class="try-dot" id="try-dot-1"></div>
+        <div class="try-dot" id="try-dot-2"></div>
+        <div class="try-dot" id="try-dot-3"></div>
+        <div class="try-dot" id="try-dot-4"></div>
+      </div>
+
+      <div class="auth-msg" id="auth-msg">सत्यापन के लिए Form A नम्बर और जन्मतिथि दर्ज करें</div>
+      
+      <div class="auth-card">
+        <div class="auth-field">
+          <label for="auth-forma">FORM A NUMBER / फॉर्म ए नंबर</label>
+          <input class="auth-inp" id="auth-forma" type="text" placeholder="जैसे: 125 या 511/A" autocomplete="off">
+        </div>
+        <div class="auth-field">
+          <label for="auth-dob">DATE OF BIRTH (DDMMYYYY) / जन्मतिथि</label>
+          <input class="auth-inp" id="auth-dob" type="text" inputmode="numeric" maxlength="8" placeholder="जैसे: 08051983 (8 अंक)" autocomplete="off">
+        </div>
+        
+        <button id="btn-auth-go" class="btn-auth-go" onclick="tryOpLogin()">
+          ✅ Verify & भेजें / Submit
+        </button>
+        
+        <button id="btn-auth-skip" class="btn-auth-skip" onclick="forceSubmitUnauth()">
+          ⚠️ Skip Verification / बिना सत्यापन भेजें
+        </button>
+      </div>
+    </section>
+
+    <!-- ── Done Screen (Submission complete) ──────────────────── -->
+    <section class="screen" id="s-done">
+      <div style="height: 14px;"></div>
+      <div class="done-ico" id="done-ico" aria-hidden="true">✅</div>
+      <h2 class="done-t" id="done-t">रिपोर्ट दर्ज हो गई!</h2>
+      <p class="done-sub" id="done-sub">
+        सुरक्षा रिपोर्ट सफलतापूर्वक दर्ज की गई है।<br>Engineer को सूचित किया जा रहा है।
+      </p>
+      
+      <div class="done-card">
+        <div class="done-id" id="done-id">REPORT ID: —</div>
+        <div id="done-auth-badge" class="auth-badge auth-unk">Checking...</div>
+        <div class="done-p" id="done-p">—</div>
+        <div class="done-p" id="done-name" style="font-weight: 700; color: var(--gr); display: none;"></div>
+        <div class="sync-tag" id="sync-tag">⏳ सिंक हो रहा है… Syncing…</div>
+      </div>
+
+      <button id="wa-share-btn" class="btn wa" onclick="sendWA()">
+        📱 WhatsApp पर साझा करें / Share
+      </button>
+      <button id="home-reset-btn" class="btn or" style="margin-top: -8px;" onclick="resetAll()">
+        🏠 होम पर वापस जाएं / Go Home
+      </button>
+      <button id="another-reset-btn" class="btn dk" style="margin-top: -8px;" onclick="resetAll()">
+        🔄 दूसरी मशीन रिपोर्ट करें / Report Another
+      </button>
+    </section>
+    
+    <!-- ── Staff Dashboard Screen ────────────────────────────── -->
+    <section class="screen" id="s-dashboard" style="padding: 0; gap: 0;">
+      
+      <!-- Dashboard Top Header -->
+      <div class="dash-hdr">
+        <div class="dash-hdr-top">
+          <div>
+            <div class="dash-title">
+              <span class="live-dot" id="live-dot"></span>
+              HEMM STAFF SYSTEM
+            </div>
+            <div class="dash-sub">AMADAND MINE · LIVE STATS</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="role-badge" class="role-badge">STAFF</span>
+            <button id="dashboard-exit-btn" class="exit-btn" onclick="exitDashboard()">बाहर / Exit</button>
+          </div>
+        </div>
+        
+        <!-- Tab Navigation Bar -->
+        <nav class="dash-tabs" aria-label="Dashboard Tabs">
+          <button class="dash-tab active" data-tab="reports" onclick="switchDashboardTab('reports')">📋 Reports</button>
+          <button class="dash-tab" data-tab="creds" onclick="switchDashboardTab('creds')">🔑 Creds</button>
+          <button class="dash-tab" data-tab="alerts" onclick="switchDashboardTab('alerts')">
+            ⛔ Alerts <span id="alerts-badge" class="unauth-count-badge" style="display: none;">0</span>
+          </button>
+          <button class="dash-tab" data-tab="archive" onclick="switchDashboardTab('archive')">🗄 Archive</button>
+        </nav>
+      </div>
+
+      <!-- Scrollable Tab Content Container -->
+      <div class="dash-panels" style="width: 100%;">
+        
+        <!-- PANEL: REPORTS (Engineer Dashboard) -->
+        <div class="dash-panel active" id="panel-reports">
+          <!-- Wrap in eng-view for scoped CSS matching -->
+          <div id="eng-view" class="on" style="display: flex; flex-direction: column; width: 100%; max-width: none; height: auto; position: static; background: transparent; border: none; box-shadow: none; padding: 0;">
+            <!-- Stats Row -->
+            <div class="stat-row">
+              <div class="stat-box">
+                <div class="stat-n" id="st-total">0</div>
+                <div class="stat-l">कुल / Total</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-n" id="st-new" style="color:var(--or)">0</div>
+                <div class="stat-l">नया / New</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-n" id="st-review" style="color:var(--ye)">0</div>
+                <div class="stat-l">समीक्षा / Review</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-n" id="st-resolved" style="color:var(--gr)">0</div>
+                <div class="stat-l">हल / Resolved</div>
+              </div>
+            </div>
+
+            <!-- Date Filters -->
+            <div class="date-filt-row">
+              <button class="fb fa" id="df-today" onclick="setDateFilter('today',this)">आज / Today</button>
+              <button class="fb" id="df-week" onclick="setDateFilter('week',this)">सप्ताह / Week</button>
+              <button class="fb" id="df-month" onclick="setDateFilter('month',this)">महीना / Month</button>
+              <button class="fb" id="df-all" onclick="setDateFilter('all',this)">सभी / All</button>
+              <span class="date-count" id="date-count">0 रिपोर्ट</span>
+            </div>
+
+            <!-- Status / Machine Filters & Tools -->
+            <div class="filt-row" id="filt-row">
+              <button class="fb fa" onclick="setFilter('all',this)">सभी / All</button>
+              <button class="fb" onclick="setFilter('pending',this)">🟠 नया</button>
+              <button class="fb" onclick="setFilter('reviewing',this)">🟡 समीक्षा</button>
+              <button class="fb" onclick="setFilter('resolved',this)">🟢 हल</button>
+              <button class="fb" onclick="setFilter('authorized',this)">✅ Auth</button>
+              <button class="fb" onclick="setFilter('unauthorized',this)">❌ Unauth</button>
+              <button class="fb" onclick="setFilter('Volvo',this)">🟦 Volvo</button>
+              <button class="fb" onclick="setFilter('SANY',this)">🟥 SANY</button>
+              <button class="fb" onclick="setFilter('BharatBenz',this)">🟩 BharatBenz</button>
+              <button class="fb" onclick="setFilter('TATA',this)">🟧 TATA</button>
+              <button class="tool-btn" id="grid-toggle-btn" onclick="toggleGridView()">📊 Grid</button>
+              <button class="tool-btn" id="sheets-btn" onclick="exportToSheetsBtn()">📋 Sheets</button>
+            </div>
+
+            <!-- Reports List -->
+            <div class="rlist" id="rlist"></div>
+
+            <!-- Grid Container -->
+            <div id="grid-container" style="display: none;">
+              <div class="grid-info">
+                <span class="gi-dot gi-ok"></span> ठीक / OK
+                <span class="gi-dot gi-issue" style="margin-left:10px"></span> समस्या / Issue
+                <span style="margin-left:auto;font-family:var(--cd);font-size:10px;letter-spacing:.5px">DGMS MATRIX</span>
+              </div>
+              <div class="grid-wrapper">
+                <table class="safety-grid" id="safety-grid"></table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL: ADMIN TABS WRAPPER -->
+        <!-- Wrap admin tabs inside admin-view so all #admin-view scoped rules match! -->
+        <div id="admin-view" class="on" style="display: flex; flex-direction: column; width: 100%; max-width: none; height: auto; position: static; background: transparent; border: none; box-shadow: none; padding: 0;">
+          
+          <!-- PANEL: CREDS (Admin Credentials) -->
+          <div class="dash-panel" id="panel-creds">
+            <h2 class="admin-section-title">CURRENT CREDENTIALS / वर्तमान क्रेडेंशियल्स</h2>
+            <div class="admin-card" id="cred-list"></div>
+
+            <h2 class="admin-section-title" style="margin-top: 20px;">ADD NEW CREDENTIAL / नया क्रेडेंशियल जोड़ें</h2>
+            <div class="admin-card">
+              <div class="admin-field">
+                <label for="new-staff-id">STAFF ID (Staff Username)</label>
+                <input class="admin-inp" id="new-staff-id" type="text" placeholder="e.g. ENG102 or ADM05" autocomplete="off">
+              </div>
+              
+              <div class="admin-field">
+                <label for="new-password">PASSWORD (Minimum 8 characters)</label>
+                <input class="admin-inp" id="new-password" type="password" placeholder="e.g. SecretPassword123" autocomplete="new-password">
+              </div>
+              
+              <div class="admin-field">
+                <label for="new-password-confirm">CONFIRM PASSWORD</label>
+                <input class="admin-inp" id="new-password-confirm" type="password" placeholder="Re-enter password" autocomplete="new-password">
+              </div>
+              
+              <div class="admin-field">
+                <label for="new-role">ROLE / भूमिका</label>
+                <select class="admin-inp" id="new-role" style="background: var(--c3); color: #fff; font-size: 15px; cursor: pointer;">
+                  <option value="engineer">engineer — Dashboard view only (अभियंता)</option>
+                  <option value="admin">admin — Full system access (व्यवस्थापक)</option>
+                </select>
+              </div>
+
+              <div class="admin-field">
+                <label for="new-label">LABEL / नाम (Optional)</label>
+                <input class="admin-inp" id="new-label" type="text" placeholder="e.g. Amit Kumar (Shift A)" autocomplete="off">
+              </div>
+
+              <button id="cred-add-btn" class="admin-btn-purple" onclick="addNewCredential()">
+                ➕ Add Credential / क्रेडेंशियल जोड़ें
+              </button>
+              
+              <div class="admin-success-msg" id="cred-add-msg" style="margin-top: 10px; display: none;"></div>
+            </div>
+          </div>
+
+          <!-- PANEL: ALERTS (Admin Alerts) -->
+          <div class="dash-panel" id="panel-alerts">
+            <h2 class="admin-section-title">⛔ SECURITY ALERTS</h2>
+            <div class="admin-card" style="background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.2); margin-bottom: 12px;">
+              <p id="alerts-count" style="font-size: 14px; color: #fca5a5; line-height: 1.6;">
+                ⚠️ ये वो ऑपरेटर हैं जिन्होंने 4 से अधिक बार गलत Form A या जन्मतिथि दर्ज की।
+              </p>
+            </div>
+            <div id="alerts-list"></div>
+          </div>
+
+          <!-- PANEL: ARCHIVE (Admin Archive) -->
+          <div class="dash-panel" id="panel-archive">
+            <h2 class="admin-section-title">🗄 REPORT ARCHIVE / पुराना डेटा संग्रह</h2>
+            <div class="admin-card" style="background: rgba(147, 51, 234, 0.08); border-color: rgba(147, 51, 234, 0.2); margin-bottom: 12px;">
+              <p style="font-size: 13px; color: #c084fc; line-height: 1.6;">
+                Resolved (हल) की गई रिपोर्टें यहाँ सुरक्षित संग्रहित रहती हैं।
+              </p>
+            </div>
+
+            <div class="admin-card" style="display: flex; gap: 10px; flex-direction: column; margin-bottom: 12px;">
+              <div style="width: 100%;">
+                <label for="archive-month-select" style="font-size: 11px; color: #c084fc; letter-spacing: 1px; display: block; margin-bottom: 4px;">SELECT ARCHIVE MONTH</label>
+                <select id="archive-month-select" onchange="loadArchiveMonth()" style="width: 100%; padding: 10px; background: var(--c3); border: 1.5px solid #3d1f5d; color: #fff; border-radius: 10px; font-size: 15px; cursor: pointer;">
+                  <option value="">-- select month --</option>
+                </select>
+              </div>
+              
+              <div style="width: 100%;">
+                <label for="archive-search" style="font-size: 11px; color: #c084fc; letter-spacing: 1px; display: block; margin-bottom: 4px;">SEARCH TIPPER / OP</label>
+                <input id="archive-search" type="text" placeholder="e.g. 42 or SANY" oninput="filterArchive()" style="width: 100%; padding: 10px; background: var(--c3); border: 1.5px solid #3d1f5d; color: #fff; border-radius: 10px; font-size: 15px;">
+              </div>
+            </div>
+
+            <div id="archive-stats" style="margin-bottom: 12px;"></div>
+
+            <button onclick="exportArchiveToCSV()" id="arc-export-btn" class="admin-btn-purple" style="display: none; background: linear-gradient(135deg, #16a34a, #22c55e); color: #000; width: 100%; margin-bottom: 12px; font-weight: 700; border-radius: 10px; padding: 12px;">
+              📥 Download Archive as CSV / एक्सेल शीट डाउनलोड करें
+            </button>
+
+            <div id="archive-list"></div>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+
+  </div><!-- #root -->
+
+  <!-- ═══ INFO MODAL (DGMS Feature Details) ═════════════════════ -->
+  <div id="info-modal" class="info-modal hidden" role="dialog" aria-modal="true" aria-labelledby="info-title">
+    <div class="info-card">
+      <div class="i-ico" id="info-ico" aria-hidden="true">⚠️</div>
+      <h3 class="i-title" id="info-title">सुरक्षा उपकरण</h3>
+      <div class="i-eng" id="info-eng">Safety Equipment</div>
+
+      <div class="i-section">
+        <h4 class="i-section-lbl">यह क्या है? / What is this?</h4>
+        <p class="i-section-txt" id="info-what-txt">—</p>
+      </div>
+
+      <div class="i-section">
+        <h4 class="i-section-lbl">सुरक्षा के लिए क्यों जरूरी है? / Why is it needed?</h4>
+        <p class="i-section-txt" id="info-why-txt">—</p>
+      </div>
+
+      <button class="info-close" onclick="closeInfo()">
+        ✕ बंद करें / Close
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ OPERATOR DETAIL MODAL ════════════════════════════════ -->
+  <div id="op-modal" class="modal-overlay center hidden" onclick="closeOpModal(event)">
+    <div class="op-modal-card" onclick="event.stopPropagation()">
+      <div class="op-modal-hdr">
+        <div class="op-modal-title">ऑपरेटर विवरण / Operator Details</div>
+        <button class="op-modal-close" onclick="closeOpModal()" aria-label="Close">✕</button>
+      </div>
+      <div class="op-modal-body" id="op-modal-body">
+        <!-- Operator details rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CONFIRMATION DIALOG MODAL ════════════════════════════ -->
+  <div id="admin-confirm-modal" class="modal-overlay center hidden">
+    <div class="admin-login-card" style="padding: 24px; text-align: center; border-color: var(--re); box-shadow: 0 0 40px rgba(239,68,68,0.2);">
+      <div style="font-size: 36px; margin-bottom: 8px;" aria-hidden="true">⚠️</div>
+      <h3 id="confirm-title" style="font-family: var(--cd); font-size: 20px; font-weight: 800; color: var(--re); letter-spacing: 1px;">Confirm Action</h3>
+      <p id="confirm-text" style="font-size: 14px; color: #ccc; margin: 12px 0 20px; line-height: 1.6;"></p>
+      
+      <div style="display: flex; gap: 10px;">
+        <button class="exit-btn" style="flex: 1; padding: 10px;" onclick="closeConfirmModal()">Cancel</button>
+        <button id="confirm-ok-btn" class="admin-btn-purple" style="flex: 1; padding: 10px; margin-top: 0; background: var(--re); color: #fff;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STAFF LOGIN MODAL ═════════════════════════════════════ -->
+  <div id="staff-login-modal" class="modal-overlay center hidden">
+    <div class="staff-login-card">
+      <div style="text-align: center; font-size: 40px; margin-bottom: 8px;" id="staff-login-icon" aria-hidden="true">🔐</div>
+      <h2 class="staff-login-title">ENGINEER / ADMIN LOGIN</h2>
+      <p class="staff-login-sub">अभियंता एवं व्यवस्थापक लॉगिन — Staff credentials required</p>
+      
+      <div id="staff-lock-banner" class="staff-lock-banner">
+        🔒 ACCESS LOCKED — Too many failed attempts<br>
+        Please wait: <span id="staff-lock-timer"></span>
+      </div>
+
+      <div class="staff-attempt-dots" aria-label="Attempts remaining">
+        <div class="staff-att-dot"></div>
+        <div class="staff-att-dot"></div>
+        <div class="staff-att-dot"></div>
+      </div>
+
+      <div class="staff-field">
+        <label for="staff-login-id">STAFF ID / स्टाफ आईडी</label>
+        <input class="staff-inp" id="staff-login-id" type="text" placeholder="Enter Staff ID" autocomplete="username" onkeydown="handleStaffLoginKeypress(event)">
+      </div>
+      
+      <div class="staff-field">
+        <label for="staff-login-pass">PASSWORD / पासवर्ड</label>
+        <input class="staff-inp" id="staff-login-pass" type="password" placeholder="Enter Password" autocomplete="current-password" onkeydown="handleStaffLoginKeypress(event)">
+      </div>
+
+      <div class="staff-success-msg" id="staff-login-err"></div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="exit-btn" style="flex: 1; padding: 12px;" onclick="hideStaffLoginModal()">Cancel / रद्द</button>
+        <button class="staff-btn-submit" style="flex: 2; padding: 12px; margin-top: 0;" id="staff-login-btn" onclick="handleStaffLogin()">LOGIN / प्रवेश करें</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCRIPTS ══════════════════════════════════════════════ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/sheets-export.js"></script>
+  <script src="js/operator.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

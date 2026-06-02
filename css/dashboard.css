@@ -1,0 +1,659 @@
+/* ═══════════════════════════════════════════════════════════════
+   HEMM Report — dashboard.css
+   Engineer dashboard styles (extends theme.css)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Dashboard View ────────────────────────────────────────── */
+#eng-view {
+  display: none;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+#eng-view.on { display: flex; }
+
+/* ── Engineer Header ───────────────────────────────────────── */
+.eng-hdr {
+  background: var(--c1);
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid var(--or);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.eng-hdr-left { display: flex; align-items: center; gap: 10px; }
+.eng-hdr-right { display: flex; align-items: center; gap: 8px; }
+
+.eng-t {
+  font-family: var(--cd);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--or);
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+.eng-m {
+  font-size: 10px;
+  color: var(--mut);
+  letter-spacing: 1px;
+  font-family: var(--b);
+  margin-top: 2px;
+}
+
+/* ── NEW Badge ─────────────────────────────────────────────── */
+.new-dot {
+  background: var(--re);
+  color: #fff;
+  font-family: var(--cd);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  letter-spacing: .5px;
+  animation: pulse 2s infinite;
+  white-space: nowrap;
+}
+.new-dot.hide { display: none; }
+
+/* ── Role Badge ────────────────────────────────────────────── */
+.role-badge {
+  font-family: var(--cd);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 10px;
+  letter-spacing: .8px;
+  background: rgba(255,107,53,.15);
+  color: var(--or);
+  border: 1px solid rgba(255,107,53,.3);
+}
+.role-badge.admin {
+  background: var(--purple-bg);
+  color: var(--purple-light);
+  border-color: var(--purple-dark);
+}
+
+/* ── Admin Link Button ─────────────────────────────────────── */
+.admin-link-btn {
+  background: var(--purple-bg);
+  color: var(--purple-light);
+  border: 1px solid var(--purple-dark);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: var(--cd);
+  font-weight: 700;
+  letter-spacing: .5px;
+  cursor: pointer;
+  text-decoration: none;
+  display: none;
+}
+.admin-link-btn.show { display: inline-block; }
+
+/* ── Date Filter Row ───────────────────────────────────────── */
+.date-filt-row {
+  display: flex;
+  gap: 7px;
+  padding: 6px 12px 2px;
+  flex-shrink: 0;
+  align-items: center;
+}
+.date-filt-row .fb { font-size: 11px; padding: 4px 11px; }
+.date-count {
+  margin-left: auto;
+  font-family: var(--cd);
+  font-size: 12px;
+  color: var(--mut);
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+/* ── Report List ───────────────────────────────────────────── */
+.rlist {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 10px 12px 24px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.rlist::-webkit-scrollbar { display: none; }
+
+/* ── Report Card ───────────────────────────────────────────── */
+.rcard {
+  background: var(--c1);
+  border: 1.5px solid var(--bdr);
+  border-radius: 14px;
+  padding: 13px 14px;
+  animation: fadeIn .3s ease;
+  border-left: 4px solid var(--bdr);
+  transition: border-color .2s;
+}
+.rcard.authorized {
+  border-left-color: var(--gr);
+}
+.rcard.unauthorized {
+  border-left-color: var(--re);
+  background: linear-gradient(135deg, rgba(239,68,68,.04) 0%, var(--c1) 60%);
+}
+.rcard.not-verified {
+  border-left-color: var(--mut);
+}
+
+/* ── Card Top Row ──────────────────────────────────────────── */
+.rt {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.r-left { display: flex; flex-direction: column; gap: 2px; }
+
+.r-id {
+  font-family: var(--cd);
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--or);
+  letter-spacing: 1px;
+  line-height: 1;
+}
+.r-mach {
+  font-family: var(--b);
+  font-size: 13px;
+  color: var(--mut);
+}
+
+.r-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Delete Button ─────────────────────────────────────────── */
+.del-btn {
+  background: transparent;
+  border: none;
+  color: var(--mut);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: color .2s, background .2s;
+  line-height: 1;
+}
+.del-btn:hover, .del-btn:active {
+  color: var(--re);
+  background: rgba(239,68,68,.1);
+}
+
+/* ── Operator Info Row ─────────────────────────────────────── */
+.r-op-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--bdr);
+  border-bottom: 1px solid var(--bdr);
+  margin: 6px 0;
+}
+.r-op-info { flex: 1; min-width: 0; }
+.r-op-name {
+  font-family: var(--b);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.r-op-desig {
+  font-family: var(--b);
+  font-size: 11px;
+  color: var(--mut);
+}
+.op-detail-btn {
+  background: transparent;
+  border: 1px solid var(--bdr);
+  color: var(--mut);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: var(--b);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+}
+.op-detail-btn:hover, .op-detail-btn:active {
+  border-color: var(--or);
+  color: var(--or);
+}
+
+/* ── Problem Tags ──────────────────────────────────────────── */
+.r-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 6px 0;
+}
+.r-tag {
+  background: rgba(239,68,68,.12);
+  color: #f87171;
+  border: 1px solid rgba(239,68,68,.2);
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-family: var(--h);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ── Note & Timestamp ──────────────────────────────────────── */
+.r-note {
+  font-family: var(--h);
+  font-size: 12px;
+  color: var(--mut);
+  font-style: italic;
+  line-height: 1.5;
+  margin: 4px 0;
+}
+.r-time {
+  font-family: var(--b);
+  font-size: 10px;
+  color: #444;
+  margin-top: 4px;
+}
+
+/* ── Action Buttons Row ────────────────────────────────────── */
+.act-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.ab {
+  flex: 1;
+  border: none;
+  padding: 7px 4px;
+  border-radius: 8px;
+  font-family: var(--cd);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  opacity: .35;
+}
+.ab:active { transform: scale(.95); }
+.ab.active { opacity: 1; }
+
+.ab.ap {
+  background: var(--or);
+  color: #000;
+}
+.ab.ar {
+  background: var(--ye);
+  color: #000;
+}
+.ab.ad {
+  background: var(--gr);
+  color: #000;
+}
+
+/* ── Empty View ────────────────────────────────────────────── */
+.empty-v {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.empty-v .empty-icon {
+  font-size: 40px;
+  opacity: .3;
+}
+.empty-v .empty-txt {
+  font-family: var(--h);
+  font-size: 15px;
+  color: var(--mut);
+  line-height: 1.6;
+}
+.empty-v .empty-eng {
+  font-family: var(--b);
+  font-size: 12px;
+  color: #444;
+}
+
+/* ── Grid View ─────────────────────────────────────────────── */
+#grid-container {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+#grid-container.on {
+  display: flex;
+}
+
+.grid-info {
+  padding: 8px 14px;
+  font-family: var(--b);
+  font-size: 11px;
+  color: var(--mut);
+  background: var(--c1);
+  border-bottom: 1px solid var(--bdr);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.grid-info .gi-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.gi-ok { background: var(--gr); }
+.gi-issue { background: var(--re); }
+
+.grid-wrapper {
+  flex: 1;
+  overflow: auto;
+  scrollbar-width: none;
+  padding: 8px;
+}
+.grid-wrapper::-webkit-scrollbar { display: none; }
+
+.safety-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 3px;
+}
+.safety-grid th {
+  background: var(--c2);
+  color: var(--mut);
+  font-family: var(--cd);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  padding: 6px 4px;
+  border-radius: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: center;
+  white-space: nowrap;
+}
+.safety-grid th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  text-align: left;
+  min-width: 60px;
+}
+.safety-grid td {
+  padding: 5px 4px;
+  text-align: center;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.door-cell {
+  background: var(--c2);
+  color: var(--or);
+  font-family: var(--cd);
+  font-size: 12px;
+  font-weight: 800;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  white-space: nowrap;
+  text-align: left;
+  padding-left: 8px;
+}
+.feature-cell {
+  background: rgba(34,197,94,.15);
+  color: var(--gr);
+  font-size: 12px;
+}
+.feature-cell.has-issue {
+  background: rgba(239,68,68,.2);
+  color: var(--re);
+  font-weight: 700;
+}
+
+/* ── Operator Detail Modal ─────────────────────────────────── */
+.op-modal-card {
+  background: var(--c1);
+  border: 1.5px solid var(--bdr);
+  border-radius: 20px 20px 16px 16px;
+  padding: 0;
+  width: 100%;
+  max-width: 400px;
+  animation: slideUp .3s ease;
+  overflow: hidden;
+}
+.op-modal-hdr {
+  background: var(--c2);
+  padding: 16px 20px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--bdr);
+}
+.op-modal-title {
+  font-family: var(--cd);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--or);
+  letter-spacing: 1px;
+}
+.op-modal-close {
+  background: transparent;
+  border: 1px solid var(--bdr);
+  color: var(--mut);
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
+.op-modal-close:hover {
+  color: var(--re);
+  border-color: var(--re);
+}
+
+.op-modal-body { padding: 16px 20px 20px; }
+
+.op-field {
+  margin-bottom: 14px;
+}
+.op-field:last-child { margin-bottom: 0; }
+.op-field-lbl {
+  font-family: var(--b);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--mut);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.op-field-val {
+  font-family: var(--b);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--txt);
+}
+.op-field-val.hindi {
+  font-family: var(--h);
+  font-size: 14px;
+}
+
+/* ── Auth Banner in Modal ──────────────────────────────────── */
+.op-auth-banner {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: var(--cd);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-align: center;
+}
+.op-auth-banner.ok {
+  background: rgba(34,197,94,.12);
+  color: var(--gr);
+  border: 1px solid rgba(34,197,94,.3);
+}
+.op-auth-banner.no {
+  background: rgba(239,68,68,.12);
+  color: var(--re);
+  border: 1px solid rgba(239,68,68,.3);
+}
+.op-auth-banner.unk {
+  background: rgba(96,96,96,.15);
+  color: #888;
+  border: 1px solid #333;
+}
+
+/* ── Login Modal ───────────────────────────────────────────── */
+.login-card {
+  background: var(--c1);
+  border: 1.5px solid var(--bdr);
+  border-radius: 20px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 380px;
+  animation: slideUp .3s ease;
+  text-align: center;
+}
+.login-title {
+  font-family: var(--cd);
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--or);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.login-sub {
+  font-family: var(--h);
+  font-size: 13px;
+  color: var(--mut);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.login-field {
+  width: 100%;
+  background: var(--c2);
+  border: 1.5px solid var(--bdr);
+  color: var(--txt);
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-family: var(--b);
+  font-size: 15px;
+  margin-bottom: 10px;
+  outline: none;
+  transition: border-color .2s;
+}
+.login-field:focus { border-color: var(--or); }
+.login-field.shake { animation: shake .4s ease; border-color: var(--re); }
+
+.login-btn {
+  width: 100%;
+  background: var(--or);
+  color: #000;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-family: var(--cd);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: opacity .2s;
+}
+.login-btn:disabled { opacity: .3; cursor: not-allowed; }
+.login-btn:active { transform: scale(.97); }
+
+/* ── Attempt Dots ──────────────────────────────────────────── */
+.attempt-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 6px;
+}
+.att-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--or);
+  transition: background .3s, transform .3s;
+}
+.att-dot.used {
+  background: var(--re);
+  transform: scale(.7);
+}
+
+/* ── Lock Banner ───────────────────────────────────────────── */
+.lock-banner {
+  display: none;
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.3);
+  color: #f87171;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: var(--h);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 12px;
+  text-align: center;
+}
+.lock-banner.show { display: block; }
+.lock-timer {
+  font-family: var(--cd);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--re);
+  display: block;
+  margin-top: 4px;
+}
+
+/* ── Login Error ───────────────────────────────────────────── */
+.login-err {
+  font-family: var(--b);
+  font-size: 12px;
+  color: var(--re);
+  margin-top: 8px;
+  min-height: 16px;
+}
+
+/* ── Grid Toggle & Sheet Export Buttons ─────────────────────── */
+.tool-btn {
+  background: var(--c2);
+  border: 1px solid var(--bdr);
+  color: var(--mut);
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--b);
+  transition: all .15s;
+}
+.tool-btn.fa {
+  background: var(--or);
+  color: #000;
+  border-color: var(--or);
+  font-weight: 700;
+}
+.tool-btn:hover { border-color: var(--or); color: var(--or); }

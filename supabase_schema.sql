@@ -120,14 +120,29 @@ CREATE POLICY "Only admins can edit config" ON public.config
     );
 
 -- ── STAFF ACCOUNTS POLICIES ──
--- Authenticated users can view staff list
+-- Authenticated users can view staff list (non-recursive SELECT)
 CREATE POLICY "Allow authenticated staff to read staff accounts" ON public.staff_accounts
     FOR SELECT TO authenticated USING (true);
 
--- Only Admins can create/delete/modify staff accounts
-CREATE POLICY "Only admins can manage staff accounts" ON public.staff_accounts
-    FOR ALL TO authenticated
-    USING (
+-- Only Admins can insert/update/delete staff accounts (avoids SELECT recursion)
+CREATE POLICY "Only admins can insert staff accounts" ON public.staff_accounts
+    FOR INSERT TO authenticated WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.staff_accounts 
+            WHERE staff_accounts.auth_uid = auth.uid() AND staff_accounts.role = 'admin'
+        )
+    );
+
+CREATE POLICY "Only admins can update staff accounts" ON public.staff_accounts
+    FOR UPDATE TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM public.staff_accounts 
+            WHERE staff_accounts.auth_uid = auth.uid() AND staff_accounts.role = 'admin'
+        )
+    );
+
+CREATE POLICY "Only admins can delete staff accounts" ON public.staff_accounts
+    FOR DELETE TO authenticated USING (
         EXISTS (
             SELECT 1 FROM public.staff_accounts 
             WHERE staff_accounts.auth_uid = auth.uid() AND staff_accounts.role = 'admin'
@@ -139,10 +154,25 @@ CREATE POLICY "Only admins can manage staff accounts" ON public.staff_accounts
 CREATE POLICY "Allow public read access to user roles" ON public.user_roles
     FOR SELECT USING (true);
 
--- Only Admins can write user roles
-CREATE POLICY "Only admins can manage user roles" ON public.user_roles
-    FOR ALL TO authenticated
-    USING (
+-- Only Admins can manage user roles (INSERT/UPDATE/DELETE)
+CREATE POLICY "Only admins can insert user roles" ON public.user_roles
+    FOR INSERT TO authenticated WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.staff_accounts 
+            WHERE staff_accounts.auth_uid = auth.uid() AND staff_accounts.role = 'admin'
+        )
+    );
+
+CREATE POLICY "Only admins can update user roles" ON public.user_roles
+    FOR UPDATE TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM public.staff_accounts 
+            WHERE staff_accounts.auth_uid = auth.uid() AND staff_accounts.role = 'admin'
+        )
+    );
+
+CREATE POLICY "Only admins can delete user roles" ON public.user_roles
+    FOR DELETE TO authenticated USING (
         EXISTS (
             SELECT 1 FROM public.staff_accounts 
             WHERE staff_accounts.auth_uid = auth.uid() AND staff_accounts.role = 'admin'

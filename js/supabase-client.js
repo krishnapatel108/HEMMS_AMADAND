@@ -98,12 +98,10 @@ async function submitReport(reportData) {
     }
 
     if (!SB) return { data: null, error: { message: 'Supabase not initialized' } };
-    const { data, error } = await SB
+    const { error } = await SB
       .from('reports')
-      .insert([reportData])
-      .select()
-      .single();
-    return { data, error };
+      .insert([reportData]);
+    return { data: reportData, error };
   } catch (err) {
     console.error('submitReport:', err);
     return { data: null, error: { message: err.message } };

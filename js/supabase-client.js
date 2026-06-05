@@ -291,12 +291,11 @@ async function verifyOperator(formA, dob) {
     }
 
     if (!SB) return null;
-    const { data, error } = await SB
-      .from('operators')
-      .select('*')
-      .eq('form_a', sanitizedFormA)
-      .eq('dob', parsedDob)
-      .maybeSingle();
+    // Use secure RPC function — cannot dump entire table
+    const { data, error } = await SB.rpc('verify_operator', {
+      p_form_a: sanitizedFormA,
+      p_dob: parsedDob
+    });
       
     if (error || !data) return null;
     return {

@@ -11,3 +11,7 @@ Desktop.ini
 index_original_backup.html
 jsonAdminOperator.txt.bak
 *.log
+
+# Sensitive data files (operator PII)
+jsonAdminOperator.txt
+insert_operators.sql

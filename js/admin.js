@@ -62,10 +62,7 @@ async function loadCredentials() {
       const stored = localStorage.getItem('hemm_mock_staff_accounts');
       if (!stored) {
         // Initialize with default admin and engineer
-        const defaultAccounts = [
-          { staff_id: '95004182', role: 'admin', label: 'Admin (Default)', created_at: new Date().toISOString() },
-          { staff_id: '8085', role: 'engineer', label: 'Engineer (Default)', created_at: new Date().toISOString() }
-        ];
+        const defaultAccounts = [];
         localStorage.setItem('hemm_mock_staff_accounts', JSON.stringify(defaultAccounts));
         adminCredentials = defaultAccounts;
       } else {

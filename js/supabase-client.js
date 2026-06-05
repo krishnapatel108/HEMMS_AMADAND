@@ -35,20 +35,14 @@ async function loadLocalData() {
     LOCAL_MOCK_DATA = JSON.parse(text);
     return LOCAL_MOCK_DATA;
   } catch (err) {
-    console.warn('Browser blocked reading jsonAdminOperator.txt (normal for file:// double-click). Using built-in test fallback credentials.');
+    console.warn('Local data file not available. Running in limited mock mode.');
     LOCAL_MOCK_DATA = {
       config: {
-        adminCredentials: [
-          { id: "95004182", label: "Admin (Default)", pass: "03052000" }
-        ],
-        engineerPin: "8085",
-        ownerWhatsApp: "919340023424"
+        adminCredentials: [],
+        engineerPin: '',
+        ownerWhatsApp: ''
       },
-      operators: {
-        "12": { formA: "12", name: "RAKESH KUMAR (TEST)", designation: "TIPPER OPERATOR", dob: "1999-12-15" },
-        "10": { formA: "10", name: "GOPAL BAHADUR PUN (TEST)", designation: "EXCAVATOR OPERATOR", dob: "1983-05-08" },
-        "125": { formA: "125", name: "BUDHRAM (TEST)", designation: "DOZER OPERATOR", dob: "1986-01-01" }
-      }
+      operators: {}
     };
     return LOCAL_MOCK_DATA;
   }
@@ -411,7 +405,7 @@ async function getConfig(key) {
   try {
     if (USE_LOCAL_MOCK) {
       if (key === 'apps_script_url') {
-        return { data: { key, value: FALLBACK_APPS_SCRIPT_URL }, error: null };
+        return { data: { key, value: '' }, error: null };
       }
       const mock = await loadLocalData();
       if (mock && mock.config) {

@@ -38,7 +38,7 @@ const TC = 4 + DGMS_FEATURES.length + 4;     // total columns = 28
 
 // ── Alternating row colors ──
 const ROW_WHITE = "#FFFFFF";
-const ROW_GREY  = "#F0F4F8";  // soft blue-grey tint
+const ROW_GREY  = "#F7F9FB";  // very light grey — subtle alternation
 
 // ═══════════════════════════════════════════════════════════════
 //  ENTRY POINTS
@@ -233,36 +233,38 @@ function styleRow(sh, row, r) {
     }
   }
 
-  // ── Auth cell ──
+  // ── Auth cell — colored text only, no bg color ──
   var authCell = sh.getRange(row, LC + 3);
+  authCell.setBackground(bg);  // keep row bg
   var auth = String(authCell.getValue()).toLowerCase();
   if (auth === "authorized") {
-    authCell.setFontColor("#FFFFFF").setBackground("#27AE60").setFontWeight("bold").setFontSize(8);
+    authCell.setFontColor("#1B8C3A").setFontWeight("bold").setFontSize(8);
   } else if (auth === "unauthorized") {
-    authCell.setFontColor("#FFFFFF").setBackground("#E74C3C").setFontWeight("bold").setFontSize(8);
+    authCell.setFontColor("#C0392B").setFontWeight("bold").setFontSize(8);
   } else {
-    authCell.setFontColor("#7F8C8D").setBackground(bg).setFontSize(8);
+    authCell.setFontColor("#95A5A6").setFontSize(8);
   }
 
-  // ── Status cell ──
-  styleStatus(sh.getRange(row, TC), r.status || "pending");
+  // ── Status cell — colored text only, no bg color ──
+  styleStatus(sh.getRange(row, TC), r.status || "pending", bg);
 
   // ── Thin bottom border ──
   full.setBorder(null, null, true, null, null, null,
     "#D5D8DC", SpreadsheetApp.BorderStyle.SOLID);
 }
 
-function styleStatus(cell, status) {
+function styleStatus(cell, status, bg) {
   var s = String(status).toLowerCase();
   cell.setValue(s.toUpperCase()).setFontWeight("bold").setFontSize(8);
+  cell.setBackground(bg || "#FFFFFF");  // keep row bg
   if (s === "pending") {
-    cell.setFontColor("#FFFFFF").setBackground("#E67E22");
+    cell.setFontColor("#D35400");
   } else if (s === "reviewing") {
-    cell.setFontColor("#FFFFFF").setBackground("#2980B9");
+    cell.setFontColor("#2471A3");
   } else if (s === "resolved") {
-    cell.setFontColor("#FFFFFF").setBackground("#27AE60");
+    cell.setFontColor("#1B8C3A");
   } else {
-    cell.setFontColor("#7F8C8D");
+    cell.setFontColor("#95A5A6");
   }
 }
 

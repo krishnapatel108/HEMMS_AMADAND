@@ -166,7 +166,7 @@ function getSheet(ss, name) {
 
   // ── Freeze ──
   sh.setFrozenRows(2);
-  sh.setFrozenColumns(4);
+  sh.setFrozenColumns(2);
 
   // ── Thin borders on headers ──
   sh.getRange(1, 1, 2, TC).setBorder(

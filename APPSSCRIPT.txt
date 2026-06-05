@@ -1,455 +1,311 @@
 // ═══════════════════════════════════════════════════════════════
-//  HEMM Report — Google Apps Script (v2.1 Professional)
-//  Receives reports via POST from the HEMM web app
-//  Writes to master sheet + daily sheets
-//  Professional formatting with grouped feature headers
-//  Updated: 20 DGMS safety features (grouped)
+//  HEMM Report — Google Apps Script (v2.2 Clean Professional)
+//  Simple, aesthetic, high-contrast design
+//  20 DGMS safety features (grouped)
 // ═══════════════════════════════════════════════════════════════
 
-// ── DGMS Feature Names (Hindi — must match config.js exactly) ──
 const DGMS_FEATURES = [
-  // Operator Safety (3)
-  "सीट बेल्ट",
-  "सीट बेल्ट चेतावनी",
-  "थकान निगरानी",
-  // Braking Systems (4)
-  "सर्विस ब्रेक",
-  "पार्किंग ब्रेक",
-  "आपातकालीन ब्रेक",
-  "रिटार्डर ब्रेक",
-  // Visibility & Lights (4)
-  "हेड लाइट",
-  "रियर विजन सिस्टम",
-  "Rear View Mirror",
-  "ब्लाइंड स्पॉट दर्पण",
-  // Warning & Alerts (3)
-  "हॉर्न",
-  "ऑडियो-विजुअल अलार्म",
-  "Proximity Warning Sensor",
-  // Safety Indicators (2)
-  "बॉडी रेज्ड इंडिकेटर",
-  "लोड इंडिकेटर",
-  // Engine & Guards (4)
-  "अग्नि शमन प्रणाली",
-  "प्रोपेलर शाफ्ट गार्ड",
-  "Turbo Charger Guard",
-  "आपातकालीन स्टीयरिंग",
+  "सीट बेल्ट", "सीट बेल्ट चेतावनी", "थकान निगरानी",
+  "सर्विस ब्रेक", "पार्किंग ब्रेक", "आपातकालीन ब्रेक", "रिटार्डर ब्रेक",
+  "हेड लाइट", "रियर विजन सिस्टम", "Rear View Mirror", "ब्लाइंड स्पॉट दर्पण",
+  "हॉर्न", "ऑडियो-विजुअल अलार्म", "Proximity Warning Sensor",
+  "बॉडी रेज्ड इंडिकेटर", "लोड इंडिकेटर",
+  "अग्नि शमन प्रणाली", "प्रोपेलर शाफ्ट गार्ड", "Turbo Charger Guard", "आपातकालीन स्टीयरिंग",
 ];
 
-// ── DGMS English Headers ──
 const DGMS_HEADERS = [
-  "Seat Belt", "Seat Belt Warning", "Fatigue Monitor",
-  "Service Brake", "Parking Brake", "Emergency Brake", "Retarder Brake",
-  "Head Light", "Rear Vision", "Rear View Mirror", "Blind Spot Mirrors",
-  "Horn", "Audio-Visual Alarm", "Proximity Sensor",
-  "Body Raised Ind.", "Load Indicator",
-  "Fire Suppression", "Propeller Guard", "Turbo Guard", "Emergency Steering",
+  "Seat Belt", "Seat Belt Warn", "Fatigue Mon.",
+  "Service Brake", "Parking Brake", "Emrg. Brake", "Retarder Brake",
+  "Head Light", "Rear Vision", "Rear Mirror", "Blind Spot",
+  "Horn", "AV Alarm", "Proximity Sensor",
+  "Body Raised", "Load Indicator",
+  "Fire Suppr.", "Prop. Guard", "Turbo Guard", "Emrg. Steering",
 ];
 
-// ── Feature Group Boundaries (column indices within feature block) ──
 const FEATURE_GROUPS = [
-  { name: "OPERATOR SAFETY",   start: 0, end: 2,  color: "#1B5E20" },   // deep green
-  { name: "BRAKING SYSTEMS",   start: 3, end: 6,  color: "#B71C1C" },   // deep red
-  { name: "VISIBILITY",        start: 7, end: 10, color: "#0D47A1" },   // deep blue
-  { name: "WARNINGS",          start: 11, end: 13, color: "#E65100" },   // deep orange
-  { name: "INDICATORS",        start: 14, end: 15, color: "#4A148C" },   // deep purple
-  { name: "ENGINE & GUARDS",   start: 16, end: 19, color: "#37474F" },   // blue-grey
+  { name: "🛡 OPERATOR SAFETY",  start: 0,  end: 2,  color: "#1B5E20" },
+  { name: "🛞 BRAKING SYSTEMS",  start: 3,  end: 6,  color: "#B71C1C" },
+  { name: "💡 VISIBILITY",       start: 7,  end: 10, color: "#0D47A1" },
+  { name: "🔔 WARNINGS",         start: 11, end: 13, color: "#E65100" },
+  { name: "📊 INDICATORS",       start: 14, end: 15, color: "#6A1B9A" },
+  { name: "⚙ ENGINE & GUARDS",  start: 16, end: 19, color: "#37474F" },
 ];
-
-// ── Color Palette ──
-const COLORS = {
-  headerBg:       "#1A1A2E",   // dark navy
-  headerText:     "#F5A623",   // orange-gold
-  groupHeaderBg:  "#0F0F1A",   // very dark
-  groupHeaderTxt: "#FFFFFF",
-  subHeaderBg:    "#16213E",   // dark blue-grey
-  subHeaderTxt:   "#E0E0E0",
-  rowEven:        "#FAFAFA",
-  rowOdd:         "#FFFFFF",
-  issueText:      "#D32F2F",   // red
-  issueBg:        "#FFEBEE",   // light red bg
-  okText:         "#2E7D32",   // green
-  okBg:           "#E8F5E9",   // light green bg
-  borderColor:    "#BDBDBD",
-  authOkBg:       "#E8F5E9",
-  authNoBg:       "#FFEBEE",
-  authUnkBg:      "#FFF8E1",
-  statusPending:  "#FFF3E0",
-  statusReview:   "#E3F2FD",
-  statusResolved: "#E8F5E9",
-};
 
 const MASTER_SHEET = "HEMM Reports";
-const FEAT_START_COL = 5;                           // column E
-const FEAT_END_COL   = FEAT_START_COL + DGMS_FEATURES.length - 1; // column X (col 24)
-const TOTAL_COLS     = 4 + DGMS_FEATURES.length + 4; // 28
+const FC = 5;                                // first feature column
+const LC = FC + DGMS_FEATURES.length - 1;    // last feature column
+const TC = 4 + DGMS_FEATURES.length + 4;     // total columns = 28
+
+// ── Alternating row colors ──
+const ROW_WHITE = "#FFFFFF";
+const ROW_GREY  = "#F0F4F8";  // soft blue-grey tint
 
 // ═══════════════════════════════════════════════════════════════
-//  ENTRY POINT
+//  ENTRY POINTS
 // ═══════════════════════════════════════════════════════════════
 
 function doPost(e) {
   try {
-    const payload = JSON.parse(e.postData.contents);
-    const mode = payload.mode || "append";
-    switch (mode) {
-      case "append":        return handleAppend(payload.report);
-      case "upsert":        return handleUpsert(payload.reports);
-      case "update_status": return handleUpdateStatus(payload);
-      default:              return ok({ error: "Unknown mode: " + mode });
+    var p = JSON.parse(e.postData.contents);
+    switch (p.mode || "append") {
+      case "append":        return j(handleAppend(p.report));
+      case "upsert":        return j(handleUpsert(p.reports));
+      case "update_status": return j(handleUpdateStatus(p));
+      default:              return j({ ok: false, error: "Unknown mode" });
     }
-  } catch (err) {
-    return ok({ ok: false, error: err.message });
-  }
+  } catch (err) { return j({ ok: false, error: err.message }); }
 }
 
 function doGet() {
-  return ok({
-    ok: true,
-    message: "HEMM Report Apps Script v2.1 Professional — 20 DGMS features",
-    features: DGMS_FEATURES.length,
-    columns: TOTAL_COLS,
-  });
+  return j({ ok: true, msg: "HEMM v2.2 — 20 features", features: 20 });
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  MODE: APPEND
+//  HANDLERS
 // ═══════════════════════════════════════════════════════════════
 
-function handleAppend(report) {
-  if (!report) return ok({ ok: false, error: "No report data" });
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  const master = getOrCreateSheet(ss, MASTER_SHEET);
-  appendAndFormat(master, report);
-
-  const dailyName = getDailySheetName(report.time || new Date().toISOString());
-  const daily = getOrCreateSheet(ss, dailyName);
-  appendAndFormat(daily, report);
-
-  return ok({ ok: true, mode: "append", id: report.firebaseKey || "" });
+function handleAppend(r) {
+  if (!r) return { ok: false, error: "No report" };
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  addRow(getSheet(ss, MASTER_SHEET), r);
+  addRow(getSheet(ss, dailyName(r.time)), r);
+  return { ok: true, mode: "append", id: r.firebaseKey || "" };
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  MODE: UPSERT
-// ═══════════════════════════════════════════════════════════════
 
 function handleUpsert(reports) {
-  if (!reports || !Array.isArray(reports))
-    return ok({ ok: false, error: "No reports array" });
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const master = getOrCreateSheet(ss, MASTER_SHEET);
-  let count = 0;
-
-  reports.forEach(function (report) {
-    const rowIdx = findRowByKey(master, report.firebaseKey);
-    if (rowIdx > 0) {
-      const vals = buildRowValues(report);
-      master.getRange(rowIdx, 1, 1, vals.length).setValues([vals]);
-      master.getRange(rowIdx, 1).setNote(report.firebaseKey || "");
-      formatDataRow(master, rowIdx, report);
-    } else {
-      appendAndFormat(master, report);
-    }
-    count++;
+  if (!reports || !reports.length) return { ok: false, error: "No reports" };
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = getSheet(ss, MASTER_SHEET);
+  var n = 0;
+  reports.forEach(function(r) {
+    var row = findRow(sh, r.firebaseKey);
+    if (row > 0) {
+      sh.getRange(row, 1, 1, TC).setValues([buildRow(r)]);
+      sh.getRange(row, 1).setNote(r.firebaseKey || "");
+      styleRow(sh, row, r);
+    } else { addRow(sh, r); }
+    n++;
   });
+  return { ok: true, mode: "upsert", count: n };
+}
 
-  return ok({ ok: true, mode: "upsert", count: count });
+function handleUpdateStatus(p) {
+  if (!p.firebaseKey || !p.status) return { ok: false, error: "Missing data" };
+  var sh = getSheet(SpreadsheetApp.getActiveSpreadsheet(), MASTER_SHEET);
+  var row = findRow(sh, p.firebaseKey);
+  if (row <= 0) return { ok: false, error: "Not found" };
+  var c = sh.getRange(row, TC);
+  c.setValue(p.status.toUpperCase());
+  styleStatus(c, p.status);
+  return { ok: true, mode: "update_status", id: p.firebaseKey };
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  MODE: UPDATE_STATUS
+//  SHEET CREATION — Clean Professional Headers
 // ═══════════════════════════════════════════════════════════════
 
-function handleUpdateStatus(payload) {
-  const key = payload.firebaseKey, status = payload.status;
-  if (!key || !status) return ok({ ok: false, error: "Missing firebaseKey or status" });
+function getSheet(ss, name) {
+  var sh = ss.getSheetByName(name);
+  if (sh) return sh;
+  sh = ss.insertSheet(name);
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const master = getOrCreateSheet(ss, MASTER_SHEET);
-  const rowIdx = findRowByKey(master, key);
-  if (rowIdx <= 0) return ok({ ok: false, error: "Report not found: " + key });
+  // ── ROW 1: Group header row ──
+  // Fill entire row dark
+  var r1 = sh.getRange(1, 1, 1, TC);
+  r1.setBackground("#1A1A2E");
 
-  const statusCol = TOTAL_COLS;
-  master.getRange(rowIdx, statusCol).setValue(status.toUpperCase());
-  formatStatusCell(master, rowIdx, statusCol, status);
+  // Report Info (cols 1-4)
+  var info = sh.getRange(1, 1, 1, 4);
+  info.merge().setValue("📋 REPORT INFO");
+  info.setBackground("#1A1A2E").setFontColor("#FFFFFF")
+    .setFontWeight("bold").setFontSize(9)
+    .setHorizontalAlignment("center").setVerticalAlignment("middle");
 
-  return ok({ ok: true, mode: "update_status", id: key });
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  SHEET CREATION & PROFESSIONAL FORMATTING
-// ═══════════════════════════════════════════════════════════════
-
-function getOrCreateSheet(ss, name) {
-  let sheet = ss.getSheetByName(name);
-  if (sheet) return sheet;
-
-  sheet = ss.insertSheet(name);
-
-  // ── ROW 1: Group Headers (merged cells spanning feature groups) ──
-  const groupRow = new Array(TOTAL_COLS).fill("");
-  groupRow[0] = "";  // empty above basic info cols
-  sheet.getRange(1, 1, 1, TOTAL_COLS).setValues([groupRow]);
-
-  // Merge & style basic info header (cols 1-4)
-  const infoMerge = sheet.getRange(1, 1, 1, 4);
-  infoMerge.merge();
-  infoMerge.setValue("REPORT INFO");
-  infoMerge.setBackground(COLORS.headerBg);
-  infoMerge.setFontColor(COLORS.headerText);
-  infoMerge.setFontWeight("bold");
-  infoMerge.setFontSize(9);
-  infoMerge.setHorizontalAlignment("center");
-  infoMerge.setVerticalAlignment("middle");
-
-  // Merge & style each feature group
-  FEATURE_GROUPS.forEach(function (g) {
-    const startCol = FEAT_START_COL + g.start;
-    const span = g.end - g.start + 1;
-    const range = sheet.getRange(1, startCol, 1, span);
-    range.merge();
-    range.setValue(g.name);
-    range.setBackground(g.color);
-    range.setFontColor("#FFFFFF");
-    range.setFontWeight("bold");
-    range.setFontSize(8);
-    range.setHorizontalAlignment("center");
-    range.setVerticalAlignment("middle");
+  // Feature groups
+  FEATURE_GROUPS.forEach(function(g) {
+    var col = FC + g.start;
+    var span = g.end - g.start + 1;
+    var rng = sh.getRange(1, col, 1, span);
+    rng.merge().setValue(g.name);
+    rng.setBackground(g.color).setFontColor("#FFFFFF")
+      .setFontWeight("bold").setFontSize(8)
+      .setHorizontalAlignment("center").setVerticalAlignment("middle");
   });
 
-  // Merge & style operator info header (last 4 cols)
-  const opCol = FEAT_END_COL + 1;
-  const opMerge = sheet.getRange(1, opCol, 1, 4);
-  opMerge.merge();
-  opMerge.setValue("OPERATOR INFO");
-  opMerge.setBackground("#263238");
-  opMerge.setFontColor(COLORS.headerText);
-  opMerge.setFontWeight("bold");
-  opMerge.setFontSize(9);
-  opMerge.setHorizontalAlignment("center");
-  opMerge.setVerticalAlignment("middle");
+  // Operator Info (last 4 cols)
+  var op = sh.getRange(1, LC + 1, 1, 4);
+  op.merge().setValue("👷 OPERATOR INFO");
+  op.setBackground("#263238").setFontColor("#FFFFFF")
+    .setFontWeight("bold").setFontSize(9)
+    .setHorizontalAlignment("center").setVerticalAlignment("middle");
 
-  // ── ROW 2: Sub-headers (individual column names) ──
-  const headers = buildHeaders();
-  sheet.getRange(2, 1, 1, headers.length).setValues([headers]);
+  // ── ROW 2: Column sub-headers ──
+  var hdrs = ["Machine", "Door #", "Reported At", "Note"]
+    .concat(DGMS_HEADERS)
+    .concat(["Operator", "Form A", "Auth", "Status"]);
+  sh.getRange(2, 1, 1, TC).setValues([hdrs]);
 
-  const hdrRange = sheet.getRange(2, 1, 1, TOTAL_COLS);
-  hdrRange.setBackground(COLORS.subHeaderBg);
-  hdrRange.setFontColor(COLORS.subHeaderTxt);
-  hdrRange.setFontWeight("bold");
-  hdrRange.setFontSize(8);
-  hdrRange.setHorizontalAlignment("center");
-  hdrRange.setVerticalAlignment("middle");
-  hdrRange.setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
+  var r2 = sh.getRange(2, 1, 1, TC);
+  r2.setBackground("#2C3E50").setFontColor("#ECF0F1")
+    .setFontWeight("bold").setFontSize(8)
+    .setHorizontalAlignment("center").setVerticalAlignment("middle")
+    .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
 
-  // ── Row Heights ──
-  sheet.setRowHeight(1, 28);
-  sheet.setRowHeight(2, 36);
-
-  // ── Column Widths ──
-  sheet.setColumnWidth(1, 90);    // Machine
-  sheet.setColumnWidth(2, 70);    // Door No.
-  sheet.setColumnWidth(3, 140);   // Reported At
-  sheet.setColumnWidth(4, 150);   // Note
-  for (var i = FEAT_START_COL; i <= FEAT_END_COL; i++) {
-    sheet.setColumnWidth(i, 72);  // Feature columns
-  }
-  sheet.setColumnWidth(FEAT_END_COL + 1, 120);  // Operator Name
-  sheet.setColumnWidth(FEAT_END_COL + 2, 80);   // Form A
-  sheet.setColumnWidth(FEAT_END_COL + 3, 90);   // Auth
-  sheet.setColumnWidth(FEAT_END_COL + 4, 85);   // Status
+  // ── Sizing ──
+  sh.setRowHeight(1, 30);
+  sh.setRowHeight(2, 38);
+  sh.setColumnWidth(1, 85);   // Machine
+  sh.setColumnWidth(2, 65);   // Door #
+  sh.setColumnWidth(3, 135);  // Reported At
+  sh.setColumnWidth(4, 160);  // Note
+  for (var i = FC; i <= LC; i++) sh.setColumnWidth(i, 70);
+  sh.setColumnWidth(LC + 1, 115); // Operator
+  sh.setColumnWidth(LC + 2, 75);  // Form A
+  sh.setColumnWidth(LC + 3, 95);  // Auth
+  sh.setColumnWidth(LC + 4, 85);  // Status
 
   // ── Freeze ──
-  sheet.setFrozenRows(2);
-  sheet.setFrozenColumns(2);
+  sh.setFrozenRows(2);
+  sh.setFrozenColumns(2);
 
-  // ── Borders for header rows ──
-  var allHeaders = sheet.getRange(1, 1, 2, TOTAL_COLS);
-  allHeaders.setBorder(true, true, true, true, true, true,
-    COLORS.borderColor, SpreadsheetApp.BorderStyle.SOLID);
+  // ── Thin borders on headers ──
+  sh.getRange(1, 1, 2, TC).setBorder(
+    true, true, true, true, true, true,
+    "#7F8C8D", SpreadsheetApp.BorderStyle.SOLID);
 
-  return sheet;
-}
-
-function buildHeaders() {
-  var base = ["Machine", "Door #", "Reported At", "Note"];
-  var features = DGMS_HEADERS.slice();
-  var tail = ["Operator", "Form A", "Auth", "Status"];
-  return base.concat(features).concat(tail);
+  return sh;
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  ROW BUILDING & FORMATTING
+//  ROW DATA & FORMATTING
 // ═══════════════════════════════════════════════════════════════
 
-function buildRowValues(report) {
-  var issueSet = buildIssueSet(report.problems || "");
-  var row = [];
-
-  row.push(report.machine || "—");
-  row.push(report.tipperNo || "—");
-  row.push(formatTime(report.time));
-  row.push(report.note || "");
-
-  DGMS_FEATURES.forEach(function (feat) {
-    row.push(issueSet.has(feat) ? "✘ ISSUE" : "✔ OK");
+function buildRow(r) {
+  var issues = toSet(r.problems || "");
+  var row = [
+    r.machine || "—",
+    r.tipperNo || "—",
+    fmtTime(r.time),
+    r.note || ""
+  ];
+  DGMS_FEATURES.forEach(function(f) {
+    row.push(issues.has(f) ? "✘" : "✔");
   });
-
-  row.push(report.operatorName || "—");
-  row.push(report.operatorFormA || "—");
-  row.push((report.operatorAuth || "unknown").toUpperCase());
-  row.push((report.status || "pending").toUpperCase());
-
+  row.push(r.operatorName || "—");
+  row.push(r.operatorFormA || "—");
+  row.push((r.operatorAuth || "unknown").toUpperCase());
+  row.push((r.status || "pending").toUpperCase());
   return row;
 }
 
-function appendAndFormat(sheet, report) {
-  var vals = buildRowValues(report);
-  sheet.appendRow(vals);
-  var row = sheet.getLastRow();
-
-  // Set firebaseKey as note
-  if (report.firebaseKey) {
-    sheet.getRange(row, 1).setNote(report.firebaseKey);
-  }
-
-  formatDataRow(sheet, row, report);
+function addRow(sh, r) {
+  var vals = buildRow(r);
+  sh.appendRow(vals);
+  var row = sh.getLastRow();
+  if (r.firebaseKey) sh.getRange(row, 1).setNote(r.firebaseKey);
+  styleRow(sh, row, r);
 }
 
-function formatDataRow(sheet, row, report) {
-  var fullRow = sheet.getRange(row, 1, 1, TOTAL_COLS);
+function styleRow(sh, row, r) {
+  var full = sh.getRange(row, 1, 1, TC);
 
-  // ── Alternating row background ──
-  var isEven = (row % 2 === 0);
-  fullRow.setBackground(isEven ? COLORS.rowEven : COLORS.rowOdd);
+  // ── Alternating row color ──
+  var bg = (row % 2 === 0) ? ROW_GREY : ROW_WHITE;
+  full.setBackground(bg);
+  full.setFontSize(9).setFontColor("#2C3E50");  // dark text on light bg
+  full.setVerticalAlignment("middle").setHorizontalAlignment("center");
+  sh.setRowHeight(row, 28);
 
-  // ── Font defaults ──
-  fullRow.setFontSize(9);
-  fullRow.setVerticalAlignment("middle");
-  fullRow.setHorizontalAlignment("center");
+  // ── Text columns left-aligned ──
+  sh.getRange(row, 1).setHorizontalAlignment("left").setFontWeight("bold");
+  sh.getRange(row, 2).setFontWeight("bold").setFontSize(12);
+  sh.getRange(row, 4).setHorizontalAlignment("left").setFontSize(8).setFontColor("#5D6D7E");
+  sh.getRange(row, LC + 1).setHorizontalAlignment("left");
 
-  // ── Left-align text columns ──
-  sheet.getRange(row, 1).setHorizontalAlignment("left");   // Machine
-  sheet.getRange(row, 4).setHorizontalAlignment("left");   // Note
-  sheet.getRange(row, FEAT_END_COL + 1).setHorizontalAlignment("left"); // Operator name
-
-  // ── Bold machine & door ──
-  sheet.getRange(row, 1).setFontWeight("bold");
-  sheet.getRange(row, 2).setFontWeight("bold").setFontSize(11);
-
-  // ── Format feature cells (OK / ISSUE) ──
+  // ── Feature cells: ✔ green / ✘ red with clear contrast ──
   for (var i = 0; i < DGMS_FEATURES.length; i++) {
-    var cell = sheet.getRange(row, FEAT_START_COL + i);
-    var val = cell.getValue();
-    if (String(val).indexOf("ISSUE") !== -1) {
-      cell.setBackground(COLORS.issueBg);
-      cell.setFontColor(COLORS.issueText);
-      cell.setFontWeight("bold");
+    var cell = sh.getRange(row, FC + i);
+    var v = String(cell.getValue());
+    if (v === "✘") {
+      cell.setFontColor("#FFFFFF").setBackground("#E74C3C").setFontWeight("bold").setFontSize(10);
     } else {
-      cell.setBackground(COLORS.okBg);
-      cell.setFontColor(COLORS.okText);
+      cell.setFontColor("#27AE60").setBackground(bg).setFontSize(10);
     }
-    cell.setFontSize(8);
   }
 
-  // ── Format Auth cell ──
-  var authCol = FEAT_END_COL + 3;
-  var authCell = sheet.getRange(row, authCol);
-  var authVal = String(authCell.getValue()).toLowerCase();
-  if (authVal === "authorized") {
-    authCell.setBackground(COLORS.authOkBg);
-    authCell.setFontColor("#1B5E20");
-    authCell.setFontWeight("bold");
-  } else if (authVal === "unauthorized") {
-    authCell.setBackground(COLORS.authNoBg);
-    authCell.setFontColor("#B71C1C");
-    authCell.setFontWeight("bold");
+  // ── Auth cell ──
+  var authCell = sh.getRange(row, LC + 3);
+  var auth = String(authCell.getValue()).toLowerCase();
+  if (auth === "authorized") {
+    authCell.setFontColor("#FFFFFF").setBackground("#27AE60").setFontWeight("bold").setFontSize(8);
+  } else if (auth === "unauthorized") {
+    authCell.setFontColor("#FFFFFF").setBackground("#E74C3C").setFontWeight("bold").setFontSize(8);
   } else {
-    authCell.setBackground(COLORS.authUnkBg);
-    authCell.setFontColor("#F57F17");
+    authCell.setFontColor("#7F8C8D").setBackground(bg).setFontSize(8);
   }
 
-  // ── Format Status cell ──
-  formatStatusCell(sheet, row, TOTAL_COLS, report.status || "pending");
+  // ── Status cell ──
+  styleStatus(sh.getRange(row, TC), r.status || "pending");
 
-  // ── Row border ──
-  fullRow.setBorder(null, null, true, null, null, null,
-    "#E0E0E0", SpreadsheetApp.BorderStyle.SOLID);
-
-  // ── Row height ──
-  sheet.setRowHeight(row, 30);
+  // ── Thin bottom border ──
+  full.setBorder(null, null, true, null, null, null,
+    "#D5D8DC", SpreadsheetApp.BorderStyle.SOLID);
 }
 
-function formatStatusCell(sheet, row, col, status) {
-  var cell = sheet.getRange(row, col);
+function styleStatus(cell, status) {
   var s = String(status).toLowerCase();
-  cell.setValue(s.toUpperCase());
-  cell.setFontWeight("bold");
-  cell.setFontSize(8);
+  cell.setValue(s.toUpperCase()).setFontWeight("bold").setFontSize(8);
   if (s === "pending") {
-    cell.setBackground(COLORS.statusPending);
-    cell.setFontColor("#E65100");
+    cell.setFontColor("#FFFFFF").setBackground("#E67E22");
   } else if (s === "reviewing") {
-    cell.setBackground(COLORS.statusReview);
-    cell.setFontColor("#0D47A1");
+    cell.setFontColor("#FFFFFF").setBackground("#2980B9");
   } else if (s === "resolved") {
-    cell.setBackground(COLORS.statusResolved);
-    cell.setFontColor("#1B5E20");
+    cell.setFontColor("#FFFFFF").setBackground("#27AE60");
+  } else {
+    cell.setFontColor("#7F8C8D");
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  HELPERS
+//  UTILITIES
 // ═══════════════════════════════════════════════════════════════
 
-function buildIssueSet(problemsStr) {
-  if (Array.isArray(problemsStr)) {
-    return new Set(problemsStr.map(function (p) { return p.trim(); }).filter(Boolean));
-  }
-  return new Set(
-    problemsStr.split(",").map(function (p) { return p.trim(); }).filter(Boolean)
-  );
+function toSet(p) {
+  var arr = Array.isArray(p) ? p : p.split(",");
+  return new Set(arr.map(function(s) { return s.trim(); }).filter(Boolean));
 }
 
-function findRowByKey(sheet, key) {
+function findRow(sh, key) {
   if (!key) return -1;
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 3) return -1;  // rows 1-2 are headers
-  var notes = sheet.getRange(3, 1, lastRow - 2, 1).getNotes();
+  var last = sh.getLastRow();
+  if (last < 3) return -1;
+  var notes = sh.getRange(3, 1, last - 2, 1).getNotes();
   for (var i = 0; i < notes.length; i++) {
     if (notes[i][0] === key) return i + 3;
   }
   return -1;
 }
 
-function formatTime(isoStr) {
+function fmtTime(iso) {
   try {
-    if (!isoStr) return new Date().toLocaleString("en-IN");
-    var d = new Date(isoStr);
+    var d = new Date(iso || Date.now());
     return d.toLocaleString("en-IN", {
       timeZone: "Asia/Kolkata",
       day: "2-digit", month: "short", year: "numeric",
-      hour: "2-digit", minute: "2-digit",
+      hour: "2-digit", minute: "2-digit"
     });
-  } catch (_) {
-    return isoStr || "—";
-  }
+  } catch (_) { return iso || "—"; }
 }
 
-function getDailySheetName(isoStr) {
+function dailyName(iso) {
   try {
-    var d = new Date(isoStr);
-    var day = String(d.getDate()).padStart(2, "0");
-    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    return day + "-" + months[d.getMonth()] + "-" + d.getFullYear();
-  } catch (_) {
-    return "Unknown-Date";
-  }
+    var d = new Date(iso || Date.now());
+    var m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return String(d.getDate()).padStart(2,"0") + "-" + m[d.getMonth()] + "-" + d.getFullYear();
+  } catch (_) { return "Unknown"; }
 }
 
-function ok(obj) {
+function j(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }

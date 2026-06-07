@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Supabase
     if (typeof initSupabase === 'function') await initSupabase();
 
+    // 2b. Pre-load Google Sheets config URL so it's ready before any report submit
+    if (typeof loadSheetsConfig === 'function') {
+      loadSheetsConfig().then(() => {
+        if (typeof startSheetsRetryProcessor === 'function') startSheetsRetryProcessor();
+      }).catch(() => {});
+    }
+
     // 3. Auth — restore staff or operator session
     if (typeof initAuth === 'function') {
       const authRes = await initAuth();

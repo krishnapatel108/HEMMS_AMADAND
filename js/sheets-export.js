@@ -12,9 +12,10 @@ let APPS_SCRIPT_URL = null;
 
 // ── Retry Queue Constants ────────────────────────────────────
 const SHEETS_QUEUE_KEY = 'hemm_sheets_retry_queue';
-const SHEETS_MAX_RETRIES = 8;
-const SHEETS_RETRY_INTERVAL_MS = 20000; // process queue every 20 seconds
-const SHEETS_QUEUE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // drop entries older than 24h
+const SHEETS_MAX_RETRIES = 12;
+const SHEETS_RETRY_INTERVAL_MS = 15000; // process queue every 15 seconds
+const SHEETS_QUEUE_MAX_AGE_MS = 48 * 60 * 60 * 1000; // drop entries older than 48h
+const SHEETS_FETCH_TIMEOUT_MS = 30000; // 30s timeout per request (mobile networks are slow)
 let _sheetsRetryTimer = null;
 
 // ═══════════════════════════════════════════════════════════════
@@ -22,12 +23,20 @@ let _sheetsRetryTimer = null;
 // ═══════════════════════════════════════════════════════════════
 
 // Fetch the Apps Script deployment URL from the 'config' table
+// Tries Supabase first, falls back to localStorage cache
 async function loadSheetsConfig() {
   try {
-    // Try localStorage fallback first in case we're offline
-    APPS_SCRIPT_URL = localStorage.getItem('hemm_apps_script_url');
+    // Always load cached URL first so we have something immediately
+    const cached = localStorage.getItem('hemm_apps_script_url');
+    if (cached) APPS_SCRIPT_URL = cached;
 
-    const { data, error } = await getConfig('apps_script_url');
+    // Try to get fresh URL from Supabase (with 8s timeout for slow mobile)
+    const configPromise = getConfig('apps_script_url');
+    const timeoutPromise = new Promise(function(_, reject) {
+      setTimeout(function() { reject(new Error('Config load timeout')); }, 8000);
+    });
+
+    const { data, error } = await Promise.race([configPromise, timeoutPromise]);
     if (error) {
       console.warn('loadSheetsConfig Supabase error:', error.message);
       return !!APPS_SCRIPT_URL; // Return true if we have a cached URL
@@ -78,8 +87,8 @@ async function appendReportToSheet(reportIdOrReport, report) {
 
     const result = await _postToAppsScript(payload);
 
-    // If the request definitively failed (not opaque), enqueue for retry
-    if (!result.success && !result.opaque) {
+    // If the request failed for any reason, enqueue for retry
+    if (!result.success) {
       _enqueueForRetry(payload);
     }
 
@@ -194,7 +203,9 @@ function _formatReportForSheet(r) {
 }
 
 // POST JSON payload to the Apps Script endpoint
-// Strategy: try CORS mode first (can detect server errors), fall back to no-cors
+// Uses text/plain content-type to avoid CORS preflight on Apps Script
+// Apps Script redirects (302) on execution — redirect:'follow' handles this
+// No no-cors fallback: opaque responses can't confirm delivery, causing silent data loss
 async function _postToAppsScript(payload) {
   if (!APPS_SCRIPT_URL) {
     return { success: false, error: 'No Apps Script URL configured' };
@@ -202,15 +213,26 @@ async function _postToAppsScript(payload) {
 
   const body = JSON.stringify(payload);
 
-  // ── Attempt 1: CORS mode (full error visibility) ───────────
+  // Create an AbortController for timeout (mobile networks can hang)
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = controller
+    ? setTimeout(function() { controller.abort(); }, SHEETS_FETCH_TIMEOUT_MS)
+    : null;
+
   try {
-    const response = await fetch(APPS_SCRIPT_URL, {
+    const fetchOptions = {
       method: 'POST',
       redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: body,
-    });
+    };
+    if (controller) fetchOptions.signal = controller.signal;
 
+    const response = await fetch(APPS_SCRIPT_URL, fetchOptions);
+
+    if (timeoutId) clearTimeout(timeoutId);
+
+    // Parse response — Apps Script returns JSON with { ok: true/false }
     try {
       const result = await response.json();
       if (result.ok === false || result.status === 'error') {
@@ -218,25 +240,25 @@ async function _postToAppsScript(payload) {
       }
       return { success: true, data: result };
     } catch (_) {
-      // Non-JSON response — treat HTTP status as indicator
-      return { success: response.ok, data: null };
+      // Non-JSON response (e.g. HTML error page from Google)
+      // If HTTP status is 200, the redirect landed on an Apps Script page — likely OK
+      // If not 200, something went wrong
+      if (response.ok) {
+        return { success: true, data: null };
+      }
+      return { success: false, error: 'HTTP ' + response.status };
     }
-  } catch (corsErr) {
-    // ── Attempt 2: no-cors fallback (request goes through but response is opaque) ──
-    try {
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: body,
-        mode: 'no-cors',
-      });
-      // Request was sent — response is opaque so we assume success
-      return { success: true, data: null, opaque: true };
-    } catch (networkErr) {
-      // True network failure (offline, DNS error, etc.)
-      console.error('_postToAppsScript network failure:', networkErr);
-      return { success: false, error: networkErr.message };
+  } catch (err) {
+    if (timeoutId) clearTimeout(timeoutId);
+
+    // Distinguish timeout from network errors for better logging
+    if (err.name === 'AbortError') {
+      console.warn('_postToAppsScript: request timed out after ' + (SHEETS_FETCH_TIMEOUT_MS / 1000) + 's');
+      return { success: false, error: 'Request timed out' };
     }
+
+    console.error('_postToAppsScript network failure:', err.message);
+    return { success: false, error: err.message };
   }
 }
 
@@ -315,7 +337,7 @@ async function _processRetryQueue() {
 
     const result = await _postToAppsScript(item.payload);
 
-    if (result.success || result.opaque) {
+    if (result.success) {
       console.log('[Sheets Queue] Retry succeeded for:', item.payload.firebaseKey);
       processed++;
     } else {

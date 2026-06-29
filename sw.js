@@ -3,7 +3,7 @@
 //  PWA caching, offline support, background sync for reports
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'hemm-v21';
+const CACHE_NAME = 'hemm-v22';
 
 const STATIC_ASSETS = [
   '/',
@@ -39,14 +39,15 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        // Use addAll but don't let a single missing asset block install
-        return cache.addAll(STATIC_ASSETS).catch((err) => {
-          console.warn('SW install: some assets failed to cache', err);
-          // Cache what we can individually
-          return Promise.allSettled(
-            STATIC_ASSETS.map((url) => cache.add(url).catch(() => {}))
-          );
+        // Fetch and cache all assets individually with {cache: 'reload'}
+        // to bypass the browser's HTTP cache.
+        const promises = STATIC_ASSETS.map((url) => {
+          const req = new Request(url, { cache: 'reload' });
+          return cache.add(req).catch((err) => {
+            console.warn('SW install: failed to cache ' + url, err);
+          });
         });
+        return Promise.all(promises);
       })
       .then(() => self.skipWaiting())
   );

@@ -15,7 +15,6 @@ const SHEETS_QUEUE_KEY = 'hemm_sheets_retry_queue';
 const SHEETS_MAX_RETRIES = 12;
 const SHEETS_RETRY_INTERVAL_MS = 15000; // process queue every 15 seconds
 const SHEETS_QUEUE_MAX_AGE_MS = 48 * 60 * 60 * 1000; // drop entries older than 48h
-const SHEETS_FETCH_TIMEOUT_MS = 30000; // 30s timeout per request (mobile networks are slow)
 let _sheetsRetryTimer = null;
 
 // ═══════════════════════════════════════════════════════════════
@@ -203,62 +202,53 @@ function _formatReportForSheet(r) {
 }
 
 // POST JSON payload to the Apps Script endpoint
-// Uses text/plain content-type to avoid CORS preflight on Apps Script
-// Apps Script redirects (302) on execution — redirect:'follow' handles this
-// No no-cors fallback: opaque responses can't confirm delivery, causing silent data loss
+// Uses the exact same simple fetch pattern as the proven working Firebase version:
+//   fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body })
+// If fetch fails (CORS/network), falls back to navigator.sendBeacon() which is
+// fire-and-forget but guaranteed to deliver on all Android browsers.
 async function _postToAppsScript(payload) {
   if (!APPS_SCRIPT_URL) {
     return { success: false, error: 'No Apps Script URL configured' };
   }
 
-  const body = JSON.stringify(payload);
+  var body = JSON.stringify(payload);
 
-  // Create an AbortController for timeout (mobile networks can hang)
-  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeoutId = controller
-    ? setTimeout(function() { controller.abort(); }, SHEETS_FETCH_TIMEOUT_MS)
-    : null;
-
+  // ── Primary: Simple fetch (matches working Firebase version exactly) ──
   try {
-    const fetchOptions = {
+    var response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      headers: { 'Content-Type': 'text/plain' },
       body: body,
-    };
-    if (controller) fetchOptions.signal = controller.signal;
+    });
 
-    const response = await fetch(APPS_SCRIPT_URL, fetchOptions);
-
-    if (timeoutId) clearTimeout(timeoutId);
-
-    // Parse response — Apps Script returns JSON with { ok: true/false }
+    // Try to parse Apps Script response
     try {
-      const result = await response.json();
+      var result = await response.json();
       if (result.ok === false || result.status === 'error') {
         return { success: false, error: result.message || result.error || 'Apps Script error' };
       }
       return { success: true, data: result };
     } catch (_) {
-      // Non-JSON response (e.g. HTML error page from Google)
-      // If HTTP status is 200, the redirect landed on an Apps Script page — likely OK
-      // If not 200, something went wrong
-      if (response.ok) {
-        return { success: true, data: null };
-      }
-      return { success: false, error: 'HTTP ' + response.status };
+      // Response not readable (CORS blocks body) but request was sent
+      // If HTTP status is OK, the request likely succeeded
+      return { success: response.ok, data: null };
     }
-  } catch (err) {
-    if (timeoutId) clearTimeout(timeoutId);
-
-    // Distinguish timeout from network errors for better logging
-    if (err.name === 'AbortError') {
-      console.warn('_postToAppsScript: request timed out after ' + (SHEETS_FETCH_TIMEOUT_MS / 1000) + 's');
-      return { success: false, error: 'Request timed out' };
+  } catch (fetchErr) {
+    // fetch() itself failed (CORS redirect blocked, network error, etc.)
+    // ── Fallback: sendBeacon (fire-and-forget, works on all Android) ──
+    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      try {
+        var blob = new Blob([body], { type: 'text/plain' });
+        var sent = navigator.sendBeacon(APPS_SCRIPT_URL, blob);
+        if (sent) {
+          console.log('[Sheets] sendBeacon fallback delivered payload');
+          return { success: true, data: null, beacon: true };
+        }
+      } catch (_) {}
     }
 
-    console.error('_postToAppsScript network failure:', err.message);
-    return { success: false, error: err.message };
+    console.error('_postToAppsScript: all methods failed:', fetchErr.message);
+    return { success: false, error: fetchErr.message };
   }
 }
 

@@ -137,11 +137,12 @@ function upgradeSheetHeaders(sh) {
   var lastCol = sh.getLastColumn();
   if (lastCol < 4) return;
   
-  // Find where the Operator column currently is
+  // Find where the Operator column currently is (handle both "Operator" and "Operator Name")
   var headers = sh.getRange(2, 1, 1, lastCol).getValues()[0];
   var opColIdx = -1;
   for (var i = 0; i < headers.length; i++) {
-    if (headers[i] === "Operator") {
+    var h = String(headers[i] || "").trim();
+    if (h === "Operator" || h === "Operator Name") {
       opColIdx = i + 1; // 1-based index
       break;
     }
@@ -160,6 +161,43 @@ function upgradeSheetHeaders(sh) {
     
     // Refresh the header styles, names, and groups
     updateHeadersAndStyle(sh);
+    
+    // Automatically repair and align data for old rows
+    fixMismatchedRowsInSheet(sh);
+  }
+}
+
+// Automatically shifts operator info columns to the right for old data rows
+// that were written before the new feature columns were inserted.
+function fixMismatchedRowsInSheet(sh) {
+  var lastRow = sh.getLastRow();
+  if (lastRow < 3) return;
+  
+  var range = sh.getRange(3, 1, lastRow - 2, TC);
+  var values = range.getValues();
+  var fixed = false;
+  
+  for (var i = 0; i < values.length; i++) {
+    var rowVals = values[i];
+    var col25 = String(rowVals[24] || "").trim(); // Manual Fire Ext. column (index 24)
+    
+    // If it contains a name instead of checkmark/cross, it needs shifting
+    if (col25 !== "✔" && col25 !== "✘" && col25 !== "") {
+      // Shift values to the right
+      rowVals[29] = rowVals[27]; // Status (index 29)
+      rowVals[28] = rowVals[26]; // Auth (index 28)
+      rowVals[27] = rowVals[25]; // Form A (index 27)
+      rowVals[26] = rowVals[24]; // Operator (index 26)
+      
+      // Set new features to default check
+      rowVals[24] = "✔"; 
+      rowVals[25] = "✔";
+      fixed = true;
+    }
+  }
+  
+  if (fixed) {
+    range.setValues(values);
   }
 }
 

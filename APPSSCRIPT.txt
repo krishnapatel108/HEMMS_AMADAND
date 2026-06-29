@@ -67,7 +67,14 @@ function doGet() {
 function handleAppend(r) {
   if (!r) return { ok: false, error: "No report" };
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  addRow(getSheet(ss, MASTER_SHEET), r);
+  var masterSh = getSheet(ss, MASTER_SHEET);
+
+  // Dedup check: skip if this report was already appended (prevents duplicates from retries)
+  if (r.firebaseKey && findRow(masterSh, r.firebaseKey) > 0) {
+    return { ok: true, mode: "append", id: r.firebaseKey, skipped: true };
+  }
+
+  addRow(masterSh, r);
   addRow(getSheet(ss, dailyName(r.time)), r);
   return { ok: true, mode: "append", id: r.firebaseKey || "" };
 }
@@ -76,17 +83,26 @@ function handleUpsert(reports) {
   if (!reports || !reports.length) return { ok: false, error: "No reports" };
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = getSheet(ss, MASTER_SHEET);
-  var n = 0;
+
+  // Batch-load all notes at once (O(1) instead of O(n) per report)
+  var noteMap = buildNoteMap(sh);
+
+  var added = 0, updated = 0;
   reports.forEach(function(r) {
-    var row = findRow(sh, r.firebaseKey);
+    var row = noteMap[r.firebaseKey] || -1;
     if (row > 0) {
       sh.getRange(row, 1, 1, TC).setValues([buildRow(r)]);
       sh.getRange(row, 1).setNote(r.firebaseKey || "");
       styleRow(sh, row, r);
-    } else { addRow(sh, r); }
-    n++;
+      updated++;
+    } else {
+      addRow(sh, r);
+      // Update noteMap so subsequent reports with same key won't duplicate
+      if (r.firebaseKey) noteMap[r.firebaseKey] = sh.getLastRow();
+      added++;
+    }
   });
-  return { ok: true, mode: "upsert", count: n };
+  return { ok: true, mode: "upsert", added: added, updated: updated, count: added + updated };
 }
 
 function handleUpdateStatus(p) {
@@ -286,6 +302,20 @@ function findRow(sh, key) {
     if (notes[i][0] === key) return i + 3;
   }
   return -1;
+}
+
+// Batch-load all firebaseKey notes into a { key: rowNumber } map
+// Used by handleUpsert to avoid calling findRow per-report (O(n^2) -> O(n))
+function buildNoteMap(sh) {
+  var map = {};
+  var last = sh.getLastRow();
+  if (last < 3) return map;
+  var notes = sh.getRange(3, 1, last - 2, 1).getNotes();
+  for (var i = 0; i < notes.length; i++) {
+    var k = notes[i][0];
+    if (k) map[k] = i + 3;
+  }
+  return map;
 }
 
 function fmtTime(iso) {

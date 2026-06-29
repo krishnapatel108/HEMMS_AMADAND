@@ -11,6 +11,7 @@ const DGMS_FEATURES = [
   "हॉर्न", "ऑडियो-विजुअल अलार्म", "Proximity Warning Sensor",
   "बॉडी रेज्ड इंडिकेटर", "लोड इंडिकेटर",
   "अग्नि शमन प्रणाली", "प्रोपेलर शाफ्ट गार्ड", "Turbo Charger Guard", "आपातकालीन स्टीयरिंग",
+  "मैन्युअल अग्निशामक", "एंटी-कोलिजन हेड-टू-टेल डिवाइस",
 ];
 
 const DGMS_HEADERS = [
@@ -20,6 +21,7 @@ const DGMS_HEADERS = [
   "Horn", "AV Alarm", "Proximity Sensor",
   "Body Raised", "Load Indicator",
   "Fire Suppr.", "Prop. Guard", "Turbo Guard", "Emrg. Steering",
+  "Manual Fire Ext.", "Anti-Collision",
 ];
 
 const FEATURE_GROUPS = [
@@ -28,7 +30,7 @@ const FEATURE_GROUPS = [
   { name: "💡 VISIBILITY",       start: 7,  end: 10, color: "#0D47A1" },
   { name: "🔔 WARNINGS",         start: 11, end: 13, color: "#E65100" },
   { name: "📊 INDICATORS",       start: 14, end: 15, color: "#6A1B9A" },
-  { name: "⚙ ENGINE & GUARDS",  start: 16, end: 19, color: "#37474F" },
+  { name: "⚙ ENGINE & GUARDS",  start: 16, end: 21, color: "#37474F" },
 ];
 
 const MASTER_SHEET = "HEMM Reports";

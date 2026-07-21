@@ -7,8 +7,8 @@
 
 'use strict';
 
-// ── Apps Script URL (loaded at runtime) ──────────────────────
-let APPS_SCRIPT_URL = null;
+// ── Apps Script URL (loaded at runtime, default to fallback) ──
+let APPS_SCRIPT_URL = typeof FALLBACK_APPS_SCRIPT_URL !== 'undefined' ? FALLBACK_APPS_SCRIPT_URL : null;
 
 // ── Retry Queue Constants ────────────────────────────────────
 const SHEETS_QUEUE_KEY = 'hemm_sheets_retry_queue';
@@ -26,7 +26,7 @@ let _sheetsRetryTimer = null;
 async function loadSheetsConfig() {
   try {
     // Always load cached URL first so we have something immediately
-    const cached = localStorage.getItem('hemm_apps_script_url');
+    const cached = localStorage.getItem('hemm_apps_script_url') || (typeof FALLBACK_APPS_SCRIPT_URL !== 'undefined' ? FALLBACK_APPS_SCRIPT_URL : null);
     if (cached) APPS_SCRIPT_URL = cached;
 
     // Try to get fresh URL from Supabase (with 8s timeout for slow mobile)

@@ -51,7 +51,7 @@
       <p class="home-h">
         क्या आपकी मशीन में कोई खराबी है?<br>सीधे Engineer को रिपोर्ट करें।
       </p>
-      <button id="start-report-btn" class="btn or" onclick="goTo('s-mach')">
+      <button id="start-report-btn" class="btn or" onclick="startSafetyCheck()">
         🛡️ सुरक्षा जाँच शुरू करें / Start Safety Check
       </button>
       <div class="safe">
@@ -64,6 +64,23 @@
         © 2026 HEMM Safety System · Dedicated to Nandini · All Rights Reserved
       </div>
     </main>
+
+    <!-- ── Step 0: Operator Name Screen ───────────────────────── -->
+    <section class="screen" id="s-opname">
+      <h2 class="auth-title">👷 ऑपरेटर का नाम / Operator Name</h2>
+      <p class="auth-sub">कृपया अपना नाम दर्ज करें (केवल एक बार) / Please enter your name (once only)</p>
+      
+      <div class="auth-card">
+        <div class="auth-field">
+          <label for="opname-input">OPERATOR NAME / ऑपरेटर का नाम</label>
+          <input class="auth-inp" id="opname-input" type="text" placeholder="जैसे: अमित कुमार / Amit Kumar" autocomplete="off" style="text-align: center; letter-spacing: 0.5px;">
+        </div>
+        
+        <button id="btn-opname-save" class="btn-auth-go" onclick="saveOperatorName()">
+          ✅ आगे बढ़ें / Continue
+        </button>
+      </div>
+    </section>
 
     <!-- ── Step 1: Machine Selection ───────────────────────────── -->
     <section class="screen" id="s-mach">

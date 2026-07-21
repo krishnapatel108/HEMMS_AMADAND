@@ -487,25 +487,51 @@ function buildConfirm() {
    OPERATOR AUTH
    ═══════════════════════════════════════════════════════════════ */
 
+function startSafetyCheck() {
+  const savedName = localStorage.getItem('hemm_operator_name');
+  if (savedName && savedName.trim()) {
+    goTo('s-mach');
+  } else {
+    const nameInp = $('opname-input');
+    if (nameInp) {
+      nameInp.value = '';
+      nameInp.classList.remove('err');
+    }
+    goTo('s-opname');
+  }
+}
+
+function saveOperatorName() {
+  const nameInp = $('opname-input');
+  if (!nameInp) return;
+
+  const rawName = nameInp.value.trim();
+  const name = sanitizeText(rawName, 50);
+
+  if (!name || name.length < 2) {
+    nameInp.classList.add('err');
+    alert('कृपया सही नाम दर्ज करें (कम से कम 2 अक्षर) / Please enter a valid name (at least 2 letters)');
+    return;
+  }
+
+  nameInp.classList.remove('err');
+  localStorage.setItem('hemm_operator_name', name);
+  goTo('s-mach');
+}
+
 function goToOpAuth() {
-  opAuthTries = 0;
-  opAuthData  = null;
-
-  // Reset form
-  const fa  = $('auth-forma');
-  const dob = $('auth-dob');
-  const msg = $('auth-msg');
-  const skip = $('btn-auth-skip');
-
-  if (fa)  { fa.value = '';  fa.classList.remove('err', 'ok'); }
-  if (dob) { dob.value = ''; dob.classList.remove('err', 'ok'); }
-  if (msg) { msg.textContent = ''; msg.className = 'auth-msg'; }
-  if (skip) skip.classList.remove('show');
-
-  // Reset dots
-  document.querySelectorAll('.try-dot').forEach(d => d.classList.remove('used'));
-
-  goTo('s-auth');
+  // Bypassing login credentials screen completely!
+  // Directly submit using operator's name saved on device.
+  const savedName = localStorage.getItem('hemm_operator_name') || 'Unknown Operator';
+  opAuthData = {
+    auth: 'authorized',
+    name: savedName,
+    designation: 'Dumper Operator',
+    formA: '—',
+    dob: '—'
+  };
+  
+  doSubmit(opAuthData);
 }
 
 async function tryOpLogin() {

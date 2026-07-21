@@ -3,7 +3,7 @@
 //  PWA caching, offline support, background sync for reports
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'hemm-v24';
+const CACHE_NAME = 'hemm-v25';
 
 const STATIC_ASSETS = [
   '/',

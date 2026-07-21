@@ -71,6 +71,7 @@ async function appendReportToSheet(reportIdOrReport, report) {
 
     payload = {
       mode: 'append',
+      sheetName: 'HEMM Reports',
       firebaseKey: finalId,
       report: _formatReportForSheet(finalReport),
     };
@@ -119,6 +120,7 @@ async function upsertReportsToSheet(reports) {
 
     const payload = {
       mode: 'upsert',
+      sheetName: 'HEMM Reports',
       reports: formatted,
     };
 
@@ -143,6 +145,7 @@ async function updateStatusInSheet(reportId, status) {
 
     const payload = {
       mode: 'update_status',
+      sheetName: 'HEMM Reports',
       firebaseKey: reportId,
       status: (status || 'pending').toUpperCase(),
       updatedAt: new Date().toLocaleString('en-IN', {

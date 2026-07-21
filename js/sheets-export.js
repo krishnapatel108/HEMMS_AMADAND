@@ -202,10 +202,9 @@ function _formatReportForSheet(r) {
 }
 
 // POST JSON payload to the Apps Script endpoint
-// Uses the exact same simple fetch pattern as the proven working Firebase version:
-//   fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body })
-// If fetch fails (CORS/network), falls back to navigator.sendBeacon() which is
-// fire-and-forget but guaranteed to deliver on all Android browsers.
+// Uses a simple fetch pattern with Content-Type: text/plain
+// If fetch fails (network error, CORS redirect block, etc.), returns success: false
+// so the report is reliably queued and retried by the background processor.
 async function _postToAppsScript(payload) {
   if (!APPS_SCRIPT_URL) {
     return { success: false, error: 'No Apps Script URL configured' };
@@ -213,7 +212,6 @@ async function _postToAppsScript(payload) {
 
   var body = JSON.stringify(payload);
 
-  // ── Primary: Simple fetch (matches working Firebase version exactly) ──
   try {
     var response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -234,20 +232,7 @@ async function _postToAppsScript(payload) {
       return { success: response.ok, data: null };
     }
   } catch (fetchErr) {
-    // fetch() itself failed (CORS redirect blocked, network error, etc.)
-    // ── Fallback: sendBeacon (fire-and-forget, works on all Android) ──
-    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      try {
-        var blob = new Blob([body], { type: 'text/plain' });
-        var sent = navigator.sendBeacon(APPS_SCRIPT_URL, blob);
-        if (sent) {
-          console.log('[Sheets] sendBeacon fallback delivered payload');
-          return { success: true, data: null, beacon: true };
-        }
-      } catch (_) {}
-    }
-
-    console.error('_postToAppsScript: all methods failed:', fetchErr.message);
+    console.error('_postToAppsScript fetch error:', fetchErr.message);
     return { success: false, error: fetchErr.message };
   }
 }

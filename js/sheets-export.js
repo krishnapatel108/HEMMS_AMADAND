@@ -7,6 +7,20 @@
 
 'use strict';
 
+// ── Clean up stale/invalid cached URLs from localStorage ──────
+(function() {
+  try {
+    var cached = localStorage.getItem('hemm_apps_script_url');
+    if (cached) {
+      var val = String(cached).trim();
+      if (!val.startsWith('https://script.google.com/macros/s/') || val.includes('YOUR_') || val.includes('PLACEHOLDER')) {
+        console.warn('[Sheets] Removing invalid cached URL:', val);
+        localStorage.removeItem('hemm_apps_script_url');
+      }
+    }
+  } catch (_) {}
+})();
+
 // ── Apps Script URL (loaded at runtime, default to fallback) ──
 let APPS_SCRIPT_URL = typeof FALLBACK_APPS_SCRIPT_URL !== 'undefined' ? FALLBACK_APPS_SCRIPT_URL : null;
 

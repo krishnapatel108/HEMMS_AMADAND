@@ -41,9 +41,15 @@ async function loadSheetsConfig() {
       return !!APPS_SCRIPT_URL; // Return true if we have a cached URL
     }
     if (data && data.value) {
-      APPS_SCRIPT_URL = data.value;
-      localStorage.setItem('hemm_apps_script_url', APPS_SCRIPT_URL);
-      return true;
+      const val = String(data.value).trim();
+      // Validate that it looks like a valid Apps Script URL and doesn't contain placeholders
+      if (val.startsWith('https://script.google.com/macros/s/') && !val.includes('YOUR_') && !val.includes('PLACEHOLDER')) {
+        APPS_SCRIPT_URL = val;
+        localStorage.setItem('hemm_apps_script_url', APPS_SCRIPT_URL);
+        return true;
+      } else {
+        console.warn('loadSheetsConfig: Supabase returned invalid URL, keeping fallback:', val);
+      }
     }
     return !!APPS_SCRIPT_URL;
   } catch (err) {
@@ -205,9 +211,9 @@ function _formatReportForSheet(r) {
 }
 
 // POST JSON payload to the Apps Script endpoint
-// Uses a simple fetch pattern with Content-Type: text/plain
-// If fetch fails (network error, CORS redirect block, etc.), returns success: false
-// so the report is reliably queued and retried by the background processor.
+// Uses 'no-cors' mode to prevent the browser from blocking the cross-origin 302 redirect.
+// This ensures that when the request is sent successfully, the browser resolves the fetch
+// promise immediately instead of rejecting it with a CORS error, preventing false retries.
 async function _postToAppsScript(payload) {
   if (!APPS_SCRIPT_URL) {
     return { success: false, error: 'No Apps Script URL configured' };
@@ -216,24 +222,15 @@ async function _postToAppsScript(payload) {
   var body = JSON.stringify(payload);
 
   try {
-    var response = await fetch(APPS_SCRIPT_URL, {
+    await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: body,
+      mode: 'no-cors',
     });
-
-    // Try to parse Apps Script response
-    try {
-      var result = await response.json();
-      if (result.ok === false || result.status === 'error') {
-        return { success: false, error: result.message || result.error || 'Apps Script error' };
-      }
-      return { success: true, data: result };
-    } catch (_) {
-      // Response not readable (CORS blocks body) but request was sent
-      // If HTTP status is OK, the request likely succeeded
-      return { success: response.ok, data: null };
-    }
+    // With no-cors, we cannot read the response, but if fetch doesn't throw,
+    // it was successfully dispatched to the network.
+    return { success: true, data: null };
   } catch (fetchErr) {
     console.error('_postToAppsScript fetch error:', fetchErr.message);
     return { success: false, error: fetchErr.message };

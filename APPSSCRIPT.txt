@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-//  HEMM Report — Google Apps Script (v3.0 Dumper + Excavator)
-//  Supports both Dumper and Excavator safety features
-//  Type column distinguishes equipment type
+//  HEMM Report — Google Apps Script (v3.1 Separate Tabs)
+//  Dumper reports → "HEMM Reports" (Original 28-column layout)
+//  Excavator reports → "Excavator Reports" (29-column layout)
 // ═══════════════════════════════════════════════════════════════
 
-// ── DUMPER DGMS Features (22 items) ──────────────────────────
+// ── DUMPER DGMS Features (22 items — Exact original) ─────────
 var DGMS_DUMPER = [
   "सीट बेल्ट", "सीट बेल्ट चेतावनी", "थकान निगरानी",
   "सर्विस ब्रेक", "पार्किंग ब्रेक", "आपातकालीन ब्रेक", "रिटार्डर ब्रेक",
@@ -68,21 +68,10 @@ var EXCAVATOR_GROUPS = [
   { name: "🏗 STRUCTURAL PROTECTION",  start: 21, end: 22, color: "#37474F" },
 ];
 
-// ── Backward compat aliases ──────────────────────────────────
-// Old code references these; keep them pointing to Dumper
-var DGMS_FEATURES = DGMS_DUMPER;
-var DGMS_HEADERS = DGMS_DUMPER_HEADERS;
-var FEATURE_GROUPS = DUMPER_GROUPS;
+var MASTER_DUMPER_SHEET    = "HEMM Reports";
+var MASTER_EXCAVATOR_SHEET = "Excavator Reports";
 
-// ── Sheet & column math ──────────────────────────────────────
-// Largest feature set determines column count
-var MAX_FEATS = Math.max(DGMS_DUMPER.length, DGMS_EXCAVATOR.length); // 22
-var MASTER_SHEET = "HEMM Reports";
-var FC = 6;                                // first feature column (after Type, Machine, Door#, ReportedAt, Note)
-var LC = FC + MAX_FEATS - 1;               // last feature column
-var TC = 5 + MAX_FEATS + 4;               // total columns = Type(1) + Machine(1) + Door(1) + Time(1) + Note(1) + Features(22) + Op(1) + FormA(1) + Auth(1) + Status(1) = 31
-
-// ── Alternating row colors ──
+// Alternating row colors
 var ROW_WHITE = "#FFFFFF";
 var ROW_GREY  = "#F7F9FB";
 
@@ -103,7 +92,7 @@ function doPost(e) {
 }
 
 function doGet() {
-  return j({ ok: true, msg: "HEMM v3.0 — Dumper + Excavator", dumperFeats: DGMS_DUMPER.length, excavatorFeats: DGMS_EXCAVATOR.length });
+  return j({ ok: true, msg: "HEMM v3.1 — Dumper + Excavator Separate Tabs", dumperFeats: DGMS_DUMPER.length, excavatorFeats: DGMS_EXCAVATOR.length });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -113,37 +102,41 @@ function doGet() {
 function handleAppend(r) {
   if (!r) return { ok: false, error: "No report" };
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var masterSh = getSheet(ss, MASTER_SHEET);
+  
+  var isExcavator = (String(r.equipType || "Dumper").toUpperCase() === "EXCAVATOR");
+  var targetSheetName = isExcavator ? MASTER_EXCAVATOR_SHEET : MASTER_DUMPER_SHEET;
+  var masterSh = getSheet(ss, targetSheetName, isExcavator);
 
-  // Dedup check: skip if this report was already appended (prevents duplicates from retries)
+  // Dedup check
   if (r.firebaseKey && findRow(masterSh, r.firebaseKey) > 0) {
     return { ok: true, mode: "append", id: r.firebaseKey, skipped: true };
   }
 
-  addRow(masterSh, r);
-  addRow(getSheet(ss, dailyName(r.time)), r);
+  addRow(masterSh, r, isExcavator);
+  addRow(getSheet(ss, dailyName(r.time, isExcavator), isExcavator), r, isExcavator);
   return { ok: true, mode: "append", id: r.firebaseKey || "" };
 }
 
 function handleUpsert(reports) {
   if (!reports || !reports.length) return { ok: false, error: "No reports" };
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = getSheet(ss, MASTER_SHEET);
-
-  // Batch-load all notes at once (O(1) instead of O(n) per report)
-  var noteMap = buildNoteMap(sh);
 
   var added = 0, updated = 0;
   reports.forEach(function(r) {
+    var isExcavator = (String(r.equipType || "Dumper").toUpperCase() === "EXCAVATOR");
+    var targetSheetName = isExcavator ? MASTER_EXCAVATOR_SHEET : MASTER_DUMPER_SHEET;
+    var sh = getSheet(ss, targetSheetName, isExcavator);
+    var TC = calcTC(isExcavator);
+
+    var noteMap = buildNoteMap(sh);
     var row = noteMap[r.firebaseKey] || -1;
     if (row > 0) {
-      sh.getRange(row, 1, 1, TC).setValues([buildRow(r)]);
+      sh.getRange(row, 1, 1, TC).setValues([buildRow(r, isExcavator)]);
       sh.getRange(row, 1).setNote(r.firebaseKey || "");
-      styleRow(sh, row, r);
+      styleRow(sh, row, r, isExcavator);
       updated++;
     } else {
-      addRow(sh, r);
-      if (r.firebaseKey) noteMap[r.firebaseKey] = sh.getLastRow();
+      addRow(sh, r, isExcavator);
       added++;
     }
   });
@@ -152,9 +145,18 @@ function handleUpsert(reports) {
 
 function handleUpdateStatus(p) {
   if (!p.firebaseKey || !p.status) return { ok: false, error: "Missing data" };
-  var sh = getSheet(SpreadsheetApp.getActiveSpreadsheet(), MASTER_SHEET);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // Try Dumper sheet first, then Excavator sheet
+  var sh = getSheet(ss, MASTER_DUMPER_SHEET, false);
   var row = findRow(sh, p.firebaseKey);
+  if (row <= 0) {
+    sh = getSheet(ss, MASTER_EXCAVATOR_SHEET, true);
+    row = findRow(sh, p.firebaseKey);
+  }
   if (row <= 0) return { ok: false, error: "Not found" };
+
+  var TC = sh.getLastColumn();
   var c = sh.getRange(row, TC);
   c.setValue(p.status.toUpperCase());
   styleStatus(c, p.status);
@@ -162,52 +164,49 @@ function handleUpdateStatus(p) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  SHEET CREATION — Headers for both Dumper & Excavator
+//  SHEET CREATION & LAYOUT
 // ═══════════════════════════════════════════════════════════════
 
-function getSheet(ss, name) {
+function calcTC(isExcavator) {
+  var featCount = isExcavator ? DGMS_EXCAVATOR.length : DGMS_DUMPER.length;
+  return 4 + featCount + 4; // Machine, Door#, Time, Note + Features + Op, FormA, Auth, Status
+}
+
+function getSheet(ss, name, isExcavator) {
   var sh = ss.getSheetByName(name);
   if (sh) {
-    // Check if sheet needs upgrading (e.g. missing Type column or wrong column count)
-    var lastCol = sh.getLastColumn();
-    if (lastCol < TC) {
-      updateHeadersAndStyle(sh);
+    if (sh.getLastRow() === 0) {
+      updateHeadersAndStyle(sh, isExcavator);
     }
     return sh;
   }
   sh = ss.insertSheet(name);
-  updateHeadersAndStyle(sh);
+  updateHeadersAndStyle(sh, isExcavator);
   return sh;
 }
 
-function updateHeadersAndStyle(sh) {
-  // Ensure enough columns exist
+function updateHeadersAndStyle(sh, isExcavator) {
+  var groups = isExcavator ? EXCAVATOR_GROUPS : DUMPER_GROUPS;
+  var headers = isExcavator ? DGMS_EXCAVATOR_HEADERS : DGMS_DUMPER_HEADERS;
+  var TC = calcTC(isExcavator);
+  var FC = 5;
+  var LC = FC + headers.length - 1;
+
   var currentCols = sh.getMaxColumns();
   if (currentCols < TC) {
     sh.insertColumnsAfter(currentCols, TC - currentCols);
   }
 
   // ── ROW 1: Group headers ──
-  // Clear row 1 first
   sh.getRange(1, 1, 1, TC).clearContent().breakApart();
 
-  // Type column
-  var typeR = sh.getRange(1, 1, 1, 1);
-  typeR.setValue("📋 TYPE");
-  typeR.setBackground("#1A1A2E").setFontColor("#FFFFFF")
+  var infoR = sh.getRange(1, 1, 1, 4);
+  infoR.merge().setValue(isExcavator ? "🏗 EXCAVATOR REPORT INFO" : "📋 REPORT INFO");
+  infoR.setBackground(isExcavator ? "#4A148C" : "#1A1A2E").setFontColor("#FFFFFF")
     .setFontWeight("bold").setFontSize(9)
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
 
-  // Report Info group (Machine, Door#, Reported At, Note)
-  var infoR = sh.getRange(1, 2, 1, 4);
-  infoR.merge().setValue("📋 REPORT INFO");
-  infoR.setBackground("#1A1A2E").setFontColor("#FFFFFF")
-    .setFontWeight("bold").setFontSize(9)
-    .setHorizontalAlignment("center").setVerticalAlignment("middle");
-
-  // Feature groups — use Dumper groups as the primary layout
-  // (Both Dumper and Excavator features are mapped into the same MAX_FEATS columns)
-  DUMPER_GROUPS.forEach(function(g) {
+  groups.forEach(function(g) {
     var col = FC + g.start;
     var span = g.end - g.start + 1;
     var rng = sh.getRange(1, col, 1, span);
@@ -217,7 +216,6 @@ function updateHeadersAndStyle(sh) {
       .setHorizontalAlignment("center").setVerticalAlignment("middle");
   });
 
-  // Operator Info (last 4 cols)
   var op = sh.getRange(1, LC + 1, 1, 4);
   op.merge().setValue("👷 OPERATOR INFO");
   op.setBackground("#263238").setFontColor("#FFFFFF")
@@ -225,8 +223,8 @@ function updateHeadersAndStyle(sh) {
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
 
   // ── ROW 2: Column sub-headers ──
-  var hdrs = ["Type", "Machine", "Door #", "Reported At", "Note"]
-    .concat(DGMS_DUMPER_HEADERS)
+  var hdrs = ["Machine", "Door #", "Reported At", "Note"]
+    .concat(headers)
     .concat(["Operator", "Form A", "Auth", "Status"]);
   sh.getRange(2, 1, 1, TC).setValues([hdrs]);
 
@@ -239,22 +237,19 @@ function updateHeadersAndStyle(sh) {
   // ── Sizing ──
   sh.setRowHeight(1, 30);
   sh.setRowHeight(2, 38);
-  sh.setColumnWidth(1, 85);   // Type
-  sh.setColumnWidth(2, 85);   // Machine
-  sh.setColumnWidth(3, 65);   // Door #
-  sh.setColumnWidth(4, 135);  // Reported At
-  sh.setColumnWidth(5, 160);  // Note
+  sh.setColumnWidth(1, 95);   // Machine
+  sh.setColumnWidth(2, 65);   // Door #
+  sh.setColumnWidth(3, 135);  // Reported At
+  sh.setColumnWidth(4, 160);  // Note
   for (var i = FC; i <= LC; i++) sh.setColumnWidth(i, 70);
   sh.setColumnWidth(LC + 1, 115); // Operator
   sh.setColumnWidth(LC + 2, 75);  // Form A
   sh.setColumnWidth(LC + 3, 95);  // Auth
   sh.setColumnWidth(LC + 4, 85);  // Status
 
-  // ── Freeze ──
   sh.setFrozenRows(2);
-  sh.setFrozenColumns(5);
+  sh.setFrozenColumns(4);
 
-  // ── Thin borders on headers ──
   sh.getRange(1, 1, 2, TC).setBorder(
     true, true, true, true, true, true,
     "#7F8C8D", SpreadsheetApp.BorderStyle.SOLID);
@@ -264,28 +259,20 @@ function updateHeadersAndStyle(sh) {
 //  ROW DATA & FORMATTING
 // ═══════════════════════════════════════════════════════════════
 
-function buildRow(r) {
+function buildRow(r, isExcavator) {
   var issues = toSet(r.problems || "");
-  var eType = String(r.equipType || "Dumper").toUpperCase();
-  var isExcavator = (eType === "EXCAVATOR");
   var featureList = isExcavator ? DGMS_EXCAVATOR : DGMS_DUMPER;
 
   var row = [
-    eType,
     r.machine || "—",
     r.tipperNo || "—",
     fmtTime(r.time),
     r.note || ""
   ];
 
-  // Map features to columns — always use MAX_FEATS columns
-  for (var i = 0; i < MAX_FEATS; i++) {
-    if (i < featureList.length) {
-      row.push(issues.has(featureList[i]) ? "✘" : "✔");
-    } else {
-      row.push("—"); // Pad with dash if this equipment type has fewer features
-    }
-  }
+  featureList.forEach(function(feat) {
+    row.push(issues.has(feat) ? "✘" : "✔");
+  });
 
   row.push(r.operatorName || "—");
   row.push(r.operatorFormA || "—");
@@ -294,56 +281,44 @@ function buildRow(r) {
   return row;
 }
 
-function addRow(sh, r) {
-  var vals = buildRow(r);
+function addRow(sh, r, isExcavator) {
+  var vals = buildRow(r, isExcavator);
   sh.appendRow(vals);
   var row = sh.getLastRow();
   if (r.firebaseKey) sh.getRange(row, 1).setNote(r.firebaseKey);
-  styleRow(sh, row, r);
+  styleRow(sh, row, r, isExcavator);
 }
 
-function styleRow(sh, row, r) {
-  var full = sh.getRange(row, 1, 1, TC);
-  var eType = String(r.equipType || "Dumper").toUpperCase();
-  var isExcavator = (eType === "EXCAVATOR");
+function styleRow(sh, row, r, isExcavator) {
+  var TC = calcTC(isExcavator);
+  var FC = 5;
   var featureList = isExcavator ? DGMS_EXCAVATOR : DGMS_DUMPER;
+  var LC = FC + featureList.length - 1;
 
-  // ── Alternating row color ──
+  var full = sh.getRange(row, 1, 1, TC);
   var bg = (row % 2 === 0) ? ROW_GREY : ROW_WHITE;
   full.setBackground(bg);
   full.setFontSize(9).setFontColor("#2C3E50");
   full.setVerticalAlignment("middle").setHorizontalAlignment("center");
   sh.setRowHeight(row, 28);
 
-  // ── Type column styling ──
-  var typeCell = sh.getRange(row, 1);
-  typeCell.setFontWeight("bold").setFontSize(8);
-  if (isExcavator) {
-    typeCell.setFontColor("#E65100"); // Orange for Excavator
-  } else {
-    typeCell.setFontColor("#1565C0"); // Blue for Dumper
-  }
-
-  // ── Text columns left-aligned ──
-  sh.getRange(row, 2).setHorizontalAlignment("left").setFontWeight("bold"); // Machine
-  sh.getRange(row, 3).setFontWeight("bold").setFontSize(12); // Door #
-  sh.getRange(row, 5).setHorizontalAlignment("left").setFontSize(8).setFontColor("#5D6D7E"); // Note
+  sh.getRange(row, 1).setHorizontalAlignment("left").setFontWeight("bold"); // Machine
+  sh.getRange(row, 2).setFontWeight("bold").setFontSize(12); // Door #
+  sh.getRange(row, 4).setHorizontalAlignment("left").setFontSize(8).setFontColor("#5D6D7E"); // Note
   sh.getRange(row, LC + 1).setHorizontalAlignment("left"); // Operator
 
-  // ── Feature cells: ✔ green / ✘ red / — grey ──
-  for (var i = 0; i < MAX_FEATS; i++) {
+  // Feature cells
+  for (var i = 0; i < featureList.length; i++) {
     var cell = sh.getRange(row, FC + i);
     var v = String(cell.getValue());
     if (v === "✘") {
       cell.setFontColor("#FFFFFF").setBackground("#E74C3C").setFontWeight("bold").setFontSize(10);
-    } else if (v === "—") {
-      cell.setFontColor("#BDC3C7").setBackground(bg).setFontSize(9); // grey dash for N/A
     } else {
       cell.setFontColor("#27AE60").setBackground(bg).setFontSize(10);
     }
   }
 
-  // ── Auth cell ──
+  // Auth cell
   var authCell = sh.getRange(row, LC + 3);
   authCell.setBackground(bg);
   var auth = String(authCell.getValue()).toLowerCase();
@@ -355,10 +330,9 @@ function styleRow(sh, row, r) {
     authCell.setFontColor("#95A5A6").setFontSize(8);
   }
 
-  // ── Status cell ──
+  // Status cell
   styleStatus(sh.getRange(row, TC), r.status || "pending", bg);
 
-  // ── Thin bottom border ──
   full.setBorder(null, null, true, null, null, null,
     "#D5D8DC", SpreadsheetApp.BorderStyle.SOLID);
 }
@@ -421,12 +395,13 @@ function fmtTime(iso) {
   } catch (_) { return iso || "—"; }
 }
 
-function dailyName(iso) {
+function dailyName(iso, isExcavator) {
   try {
     var d = new Date(iso || Date.now());
     var m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    return String(d.getDate()).padStart(2,"0") + "-" + m[d.getMonth()] + "-" + d.getFullYear();
-  } catch (_) { return "Unknown"; }
+    var prefix = isExcavator ? "Excavator-" : "";
+    return prefix + String(d.getDate()).padStart(2,"0") + "-" + m[d.getMonth()] + "-" + d.getFullYear();
+  } catch (_) { return isExcavator ? "Excavator-Unknown" : "Unknown"; }
 }
 
 function j(obj) {

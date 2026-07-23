@@ -89,9 +89,10 @@ async function appendReportToSheet(reportIdOrReport, report) {
       finalId = reportIdOrReport.id || reportIdOrReport.firebaseKey || '';
     }
 
+    const isExcavator = (finalReport.equip_type || finalReport.equipType || 'Dumper') === 'Excavator';
     payload = {
       mode: 'append',
-      sheetName: 'HEMM Reports',
+      sheetName: isExcavator ? 'Excavator Reports' : 'HEMM Reports',
       firebaseKey: finalId,
       report: _formatReportForSheet(finalReport),
     };

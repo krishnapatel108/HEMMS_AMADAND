@@ -10,14 +10,8 @@
 // ── Clean up stale/invalid cached URLs from localStorage ──────
 (function() {
   try {
-    var cached = localStorage.getItem('hemm_apps_script_url');
-    if (cached) {
-      var val = String(cached).trim();
-      if (!val.startsWith('https://script.google.com/macros/s/') || val.includes('YOUR_') || val.includes('PLACEHOLDER')) {
-        console.warn('[Sheets] Removing invalid cached URL:', val);
-        localStorage.removeItem('hemm_apps_script_url');
-      }
-    }
+    // Purge cached URL so all devices immediately use the verified active Apps Script URL
+    localStorage.removeItem('hemm_apps_script_url');
   } catch (_) {}
 })();
 
@@ -36,31 +30,25 @@ let _sheetsRetryTimer = null;
 // ═══════════════════════════════════════════════════════════════
 
 // Fetch the Apps Script deployment URL from the 'config' table
-// Tries Supabase first, falls back to localStorage cache
+// Tries Supabase first, falls back to FALLBACK_APPS_SCRIPT_URL
 async function loadSheetsConfig() {
   try {
-    // Always load cached URL first so we have something immediately
-    const cached = localStorage.getItem('hemm_apps_script_url') || (typeof FALLBACK_APPS_SCRIPT_URL !== 'undefined' ? FALLBACK_APPS_SCRIPT_URL : null);
-    if (cached) APPS_SCRIPT_URL = cached;
+    if (typeof FALLBACK_APPS_SCRIPT_URL !== 'undefined' && FALLBACK_APPS_SCRIPT_URL) {
+      APPS_SCRIPT_URL = FALLBACK_APPS_SCRIPT_URL;
+    }
 
-    // Try to get fresh URL from Supabase (with 8s timeout for slow mobile)
+    // Try to get fresh URL from Supabase (with 4s timeout for slow mobile)
     const configPromise = getConfig('apps_script_url');
     const timeoutPromise = new Promise(function(_, reject) {
-      setTimeout(function() { reject(new Error('Config load timeout')); }, 8000);
+      setTimeout(function() { reject(new Error('Config load timeout')); }, 4000);
     });
 
     const { data, error } = await Promise.race([configPromise, timeoutPromise]);
-    if (error) {
-      console.warn('loadSheetsConfig Supabase error:', error.message);
-      return !!APPS_SCRIPT_URL; // Return true if we have a cached URL
-    }
-    if (data && data.value) {
+    if (!error && data && data.value) {
       const val = String(data.value).trim();
       // Validate that it looks like a valid Apps Script URL and doesn't contain placeholders
       if (val.startsWith('https://script.google.com/macros/s/') && !val.includes('YOUR_') && !val.includes('PLACEHOLDER')) {
         APPS_SCRIPT_URL = val;
-        localStorage.setItem('hemm_apps_script_url', APPS_SCRIPT_URL);
-        return true;
       } else {
         console.warn('loadSheetsConfig: Supabase returned invalid URL, keeping fallback:', val);
       }

@@ -170,7 +170,7 @@ function getSheet(ss, name) {
   if (sh) {
     // Check if sheet needs upgrading (e.g. missing Type column or wrong column count)
     var lastCol = sh.getLastColumn();
-    if (lastCol > 0 && lastCol < TC) {
+    if (lastCol < TC) {
       updateHeadersAndStyle(sh);
     }
     return sh;

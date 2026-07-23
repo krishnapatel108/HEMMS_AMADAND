@@ -17,6 +17,7 @@ let lastReport   = null;
 let opAuthTries  = 0;
 let opAuthData   = null;
 let waNumber     = '';
+let equipType    = 'Dumper';  // 'Dumper' or 'Excavator'
 
 /* ── CACHED DOM ELEMENTS ──────────────────────────────────── */
 const $ = id => document.getElementById(id);
@@ -195,7 +196,12 @@ function goTo(screenId) {
 function updateProgress(screenId) {
   const steps = ['s-mach', 's-num', 's-prob', 's-conf'];
   const idx = steps.indexOf(screenId);
-  document.querySelectorAll('.prog-s').forEach((bar, i) => {
+  // Each screen section now has its own 5 prog-s bars;
+  // we only update those inside the currently-active screen.
+  const activeScreen = $(screenId);
+  if (!activeScreen) return;
+  const bars = activeScreen.querySelectorAll('.prog-s');
+  bars.forEach((bar, i) => {
     bar.classList.remove('done', 'active');
     if (i < idx)  bar.classList.add('done');
     if (i === idx) bar.classList.add('active');
@@ -211,12 +217,15 @@ function buildMachineList() {
   const list = $('mach-list');
   if (!list) return;
 
+  // Choose machine list based on equipment type
+  const machineList = equipType === 'Excavator' ? MACHINES_EXCAVATOR : MACHINES;
+
   list.innerHTML = '';
-  MACHINES.forEach(m => {
+  machineList.forEach(m => {
     const btn = document.createElement('button');
     btn.className = 'mach-btn';
     btn.setAttribute('data-m', m.id);
-    btn.id = 'mach-' + m.id;
+    btn.id = 'mach-' + m.id.replace(/\s+/g, '-');
     btn.setAttribute('aria-label', m.id + ' - ' + m.hindi);
     btn.innerHTML =
       '<span class="mach-ico">' + escapeHtml(m.emoji) + '</span>' +
@@ -244,7 +253,8 @@ function selMach(btn) {
 
   // Update pill on numpad screen
   const pill = $('t-pill');
-  const machData = MACHINES.find(m => m.id === machine);
+  const machineList = equipType === 'Excavator' ? MACHINES_EXCAVATOR : MACHINES;
+  const machData = machineList.find(m => m.id === machine);
   if (pill && machData) {
     pill.textContent = machData.emoji + ' ' + machine;
   }
@@ -283,8 +293,9 @@ function np(key) {
 function updateProbPill() {
   const pill = $('prob-pill');
   if (!pill) return;
-  const machData = MACHINES.find(m => m.id === machine);
-  const emoji = machData ? machData.emoji : '🚛';
+  const machineList = equipType === 'Excavator' ? MACHINES_EXCAVATOR : MACHINES;
+  const machData = machineList.find(m => m.id === machine);
+  const emoji = machData ? machData.emoji : (equipType === 'Excavator' ? '🏗️' : '🚛');
   pill.textContent = emoji + ' ' + machine + ' #' + (tipperNo || '—');
 }
 
@@ -297,8 +308,11 @@ function buildFeatureGrid() {
   const grid = $('feat-grid');
   if (!grid) return;
 
+  // Choose feature list based on equipment type
+  const featureList = equipType === 'Excavator' ? DGMS_EXCAVATOR : DGMS;
+
   grid.innerHTML = '';
-  DGMS.forEach((feat, idx) => {
+  featureList.forEach((feat, idx) => {
     const wrap = document.createElement('div');
     wrap.className = 'feat-wrap';
 
@@ -366,7 +380,8 @@ function chkP() {
    ═══════════════════════════════════════════════════════════════ */
 
 function showInfo(idx) {
-  const feat = DGMS[idx];
+  const featureList = equipType === 'Excavator' ? DGMS_EXCAVATOR : DGMS;
+  const feat = featureList[idx];
   if (!feat) return;
 
   const modal = $('info-modal');
@@ -458,12 +473,14 @@ function toggleMic() {
    ═══════════════════════════════════════════════════════════════ */
 
 function buildConfirm() {
-  const machData = MACHINES.find(m => m.id === machine);
-  const emoji = machData ? machData.emoji : '🚛';
+  const machineList = equipType === 'Excavator' ? MACHINES_EXCAVATOR : MACHINES;
+  const featureList = equipType === 'Excavator' ? DGMS_EXCAVATOR : DGMS;
+  const machData = machineList.find(m => m.id === machine);
+  const emoji = machData ? machData.emoji : (equipType === 'Excavator' ? '🏗️' : '🚛');
 
   // ID
   const confId = $('conf-id');
-  if (confId) confId.textContent = emoji + ' ' + escapeHtml(machine) + ' — DOOR #' + escapeHtml(tipperNo);
+  if (confId) confId.textContent = emoji + ' ' + escapeHtml(machine) + ' — DOOR #' + escapeHtml(tipperNo) + ' (' + equipType.toUpperCase() + ')';
 
   // Machine + Door
   const confM = $('conf-m');
@@ -475,7 +492,7 @@ function buildConfirm() {
     if (selFeat.size > 0) {
       let html = '<div class="conf-feat-list">';
       selFeat.forEach(h => {
-        const feat = DGMS.find(f => f.h === h);
+        const feat = featureList.find(f => f.h === h);
         const ico = feat ? feat.i : '⚠️';
         html += '<span class="conf-feat-tag">' + escapeHtml(ico) + ' ' + escapeHtml(h) + '</span>';
       });
@@ -502,7 +519,7 @@ function buildConfirm() {
 function startSafetyCheck() {
   const savedName = localStorage.getItem('hemm_operator_name');
   if (savedName && savedName.trim()) {
-    goTo('s-mach');
+    goTo('s-equip');
   } else {
     const nameInp = $('opname-input');
     if (nameInp) {
@@ -528,6 +545,36 @@ function saveOperatorName() {
 
   nameInp.classList.remove('err');
   localStorage.setItem('hemm_operator_name', name);
+  goTo('s-equip');
+}
+
+/* ── Equipment Type Selection ──────────────────────────────── */
+function selectEquipType(type) {
+  equipType = type;
+
+  // Highlight selected button
+  document.querySelectorAll('.equip-btn').forEach(b => b.classList.remove('sel'));
+  const selBtn = $('equip-' + type.toLowerCase());
+  if (selBtn) selBtn.classList.add('sel');
+
+  // Reset machine selection and feature selection when switching type
+  machine = '';
+  tipperNo = '';
+  selFeat = new Set();
+  const nxt = $('btn-mach-nxt');
+  if (nxt) nxt.disabled = true;
+
+  // Rebuild machine list and feature grid for the selected type
+  buildMachineList();
+  buildFeatureGrid();
+
+  // Update numpad display
+  const disp = $('t-disp');
+  if (disp) { disp.textContent = '—'; disp.classList.remove('has'); }
+  const numNxt = $('btn-num-nxt');
+  if (numNxt) numNxt.disabled = true;
+
+  // Navigate to machine selection
   goTo('s-mach');
 }
 
@@ -535,10 +582,11 @@ function goToOpAuth() {
   // Bypassing login credentials screen completely!
   // Directly submit using operator's name saved on device.
   const savedName = localStorage.getItem('hemm_operator_name') || 'Unknown Operator';
+  const designation = equipType === 'Excavator' ? 'Excavator Operator' : 'Dumper Operator';
   opAuthData = {
     auth: 'authorized',
     name: savedName,
-    designation: 'Dumper Operator',
+    designation: designation,
     formA: '—',
     dob: '—'
   };
@@ -680,6 +728,7 @@ async function doSubmit(authInfo) {
     id: uuid4(),
     machine:        machine,
     tipper_no:      tipperNo,
+    equip_type:     equipType,
     problems:       problems,
     note:           noteVal,
     status:         'pending',

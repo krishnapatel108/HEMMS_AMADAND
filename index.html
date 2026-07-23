@@ -47,7 +47,7 @@
     <main class="screen on" id="s-home">
       <div style="height: 6px;"></div>
       <div class="truck" aria-hidden="true">🚛</div>
-      <h2 class="home-t">TIPPER SAFETY DEVICE STATUS</h2>
+      <h2 class="home-t">HEMM SAFETY DEVICE STATUS</h2>
       <p class="home-h">
         क्या आपकी मशीन में कोई खराबी है?<br>सीधे Engineer को रिपोर्ट करें।
       </p>
@@ -82,11 +82,41 @@
       </div>
     </section>
 
+    <!-- ── Step 0b: Equipment Type Selection ─────────────────── -->
+    <section class="screen" id="s-equip">
+      <h2 class="q-h">उपकरण का प्रकार चुनें</h2>
+      <p class="q-e">SELECT EQUIPMENT TYPE</p>
+      
+      <div class="equip-list" id="equip-list">
+        <button class="equip-btn" id="equip-dumper" onclick="selectEquipType('Dumper')">
+          <span class="equip-ico">🚛</span>
+          <span class="equip-info">
+            <span class="equip-name">DUMPER</span>
+            <span class="equip-sub">डम्पर / टिपर</span>
+          </span>
+          <span class="equip-chk">✓</span>
+        </button>
+        <button class="equip-btn" id="equip-excavator" onclick="selectEquipType('Excavator')">
+          <span class="equip-ico">🏗️</span>
+          <span class="equip-info">
+            <span class="equip-name">EXCAVATOR</span>
+            <span class="equip-sub">एक्सकेवेटर / खुदाई मशीन</span>
+          </span>
+          <span class="equip-chk">✓</span>
+        </button>
+      </div>
+
+      <div class="nav-row">
+        <button id="btn-equip-back" class="back" onclick="goTo('s-home')">← वापस / Back</button>
+      </div>
+    </section>
+
     <!-- ── Step 1: Machine Selection ───────────────────────────── -->
     <section class="screen" id="s-mach">
-      <div class="step-pill">STEP 1 OF 4</div>
+      <div class="step-pill">STEP 1 OF 5</div>
       <div class="prog-wrap" aria-hidden="true">
         <div class="prog-s active"></div>
+        <div class="prog-s"></div>
         <div class="prog-s"></div>
         <div class="prog-s"></div>
         <div class="prog-s"></div>
@@ -95,21 +125,22 @@
       <p class="q-e">SELECT MACHINE BRAND</p>
       
       <div class="mach-list" id="mach-list">
-        <!-- Built dynamically from MACHINES config by operator.js -->
+        <!-- Built dynamically from MACHINES / MACHINES_EXCAVATOR config by operator.js -->
       </div>
 
       <div class="nav-row">
-        <button id="btn-mach-back" class="back" onclick="goTo('s-home')">← वापस / Back</button>
+        <button id="btn-mach-back" class="back" onclick="goTo('s-equip')">← वापस / Back</button>
         <button id="btn-mach-nxt" class="nxt" disabled onclick="goTo('s-num')">आगे → / Next</button>
       </div>
     </section>
 
     <!-- ── Step 2: Door Number Numpad ─────────────────────────── -->
     <section class="screen" id="s-num">
-      <div class="step-pill">STEP 2 OF 4</div>
+      <div class="step-pill">STEP 2 OF 5</div>
       <div class="prog-wrap" aria-hidden="true">
         <div class="prog-s done"></div>
         <div class="prog-s active"></div>
+        <div class="prog-s"></div>
         <div class="prog-s"></div>
         <div class="prog-s"></div>
       </div>
@@ -142,11 +173,12 @@
 
     <!-- ── Step 3: DGMS Features Selection ────────────────────── -->
     <section class="screen" id="s-prob">
-      <div class="step-pill">STEP 3 OF 4</div>
+      <div class="step-pill">STEP 3 OF 5</div>
       <div class="prog-wrap" aria-hidden="true">
         <div class="prog-s done"></div>
         <div class="prog-s done"></div>
         <div class="prog-s active"></div>
+        <div class="prog-s"></div>
         <div class="prog-s"></div>
       </div>
       <div class="id-pill" id="prob-pill">🚛 —</div>
@@ -183,6 +215,7 @@
     <section class="screen" id="s-conf">
       <div class="step-pill">जांचें और भेजें</div>
       <div class="prog-wrap" aria-hidden="true">
+        <div class="prog-s done"></div>
         <div class="prog-s done"></div>
         <div class="prog-s done"></div>
         <div class="prog-s done"></div>

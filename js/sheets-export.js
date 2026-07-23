@@ -211,6 +211,7 @@ function _formatReportForSheet(r) {
   }
 
   return {
+    equipType:     r.equip_type || r.equipType || 'Dumper',
     machine:       r.machine || '—',
     tipperNo:      r.tipper_no || r.tipperNo || '—',
     problems:      problems,

@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-//  HEMM Report — Google Apps Script (v2.2 Clean Professional)
-//  Simple, aesthetic, high-contrast design
-//  20 DGMS safety features (grouped)
+//  HEMM Report — Google Apps Script (v3.0 Dumper + Excavator)
+//  Supports both Dumper and Excavator safety features
+//  Type column distinguishes equipment type
 // ═══════════════════════════════════════════════════════════════
 
-const DGMS_FEATURES = [
+// ── DUMPER DGMS Features (22 items) ──────────────────────────
+var DGMS_DUMPER = [
   "सीट बेल्ट", "सीट बेल्ट चेतावनी", "थकान निगरानी",
   "सर्विस ब्रेक", "पार्किंग ब्रेक", "आपातकालीन ब्रेक", "रिटार्डर ब्रेक",
   "हेड लाइट", "रियर विजन सिस्टम", "Rear View Mirror", "ब्लाइंड स्पॉट दर्पण",
@@ -14,7 +15,7 @@ const DGMS_FEATURES = [
   "मैन्युअल अग्निशामक", "एंटी-कोलिजन हेड-टू-टेल डिवाइस",
 ];
 
-const DGMS_HEADERS = [
+var DGMS_DUMPER_HEADERS = [
   "Seat Belt", "Seat Belt Warn", "Fatigue Mon.",
   "Service Brake", "Parking Brake", "Emrg. Brake", "Retarder Brake",
   "Head Light", "Rear Vision", "Rear Mirror", "Blind Spot",
@@ -24,7 +25,7 @@ const DGMS_HEADERS = [
   "Manual Fire Ext.", "Anti-Collision",
 ];
 
-const FEATURE_GROUPS = [
+var DUMPER_GROUPS = [
   { name: "🛡 OPERATOR SAFETY",  start: 0,  end: 2,  color: "#1B5E20" },
   { name: "🛞 BRAKING SYSTEMS",  start: 3,  end: 6,  color: "#B71C1C" },
   { name: "💡 VISIBILITY",       start: 7,  end: 10, color: "#0D47A1" },
@@ -33,14 +34,57 @@ const FEATURE_GROUPS = [
   { name: "⚙ ENGINE & GUARDS",  start: 16, end: 21, color: "#37474F" },
 ];
 
-const MASTER_SHEET = "HEMM Reports";
-const FC = 5;                                // first feature column
-const LC = FC + DGMS_FEATURES.length - 1;    // last feature column
-const TC = 4 + DGMS_FEATURES.length + 4;     // total columns = 28
+// ── EXCAVATOR DGMS Features (23 items — from EXCAVATOR.xlsx) ─
+var DGMS_EXCAVATOR = [
+  "ऑडियो विजुअल अलार्म (AVA)", "रियर विजन कैमरा", "हॉर्न",
+  "सीट बेल्ट", "सीट बेल्ट रिमाइंडर",
+  "ऑल फंक्शन कट ऑफ स्विच", "बैटरी कट ऑफ स्विच (बाहर)", "टू-वे कम्यूनिकेशन सिस्टम", "ऑपरेटर थकान सेंसर",
+  "सर्विस ब्रेक", "स्विंग मोटर ब्रेक", "स्विंग लॉक", "पार्किंग ब्रेक",
+  "केबिन लाइट", "फ्रंट लाइट", "बैक लाइट", "बूम लाइट",
+  "रियर व्यू मिरर (दायाँ)", "रियर व्यू मिरर (बायाँ)",
+  "मैन्युअल अग्निशामक", "अग्नि शमन प्रणाली (AFDSS)",
+  "ROPS (रोल ओवर प्रोटेक्शन)", "FOPS (गिरती वस्तु सुरक्षा)",
+];
+
+var DGMS_EXCAVATOR_HEADERS = [
+  "AVA", "Rear Cam", "Horn",
+  "Seat Belt", "Belt Remind",
+  "Func. Cut Off", "Battery Cut Off", "2-Way Comm", "Fatigue Sensor",
+  "Service Brake", "Swing Brake", "Swing Lock", "Parking Brake",
+  "Cabin Light", "Front Light", "Back Light", "Boom Light",
+  "Mirror (R)", "Mirror (L)",
+  "Manual Fire Ext.", "AFDSS",
+  "ROPS", "FOPS",
+];
+
+var EXCAVATOR_GROUPS = [
+  { name: "🔔 WARNINGS & VISION",     start: 0,  end: 2,  color: "#E65100" },
+  { name: "🛡 OPERATOR SAFETY",        start: 3,  end: 4,  color: "#1B5E20" },
+  { name: "🔌 CONTROLS & SWITCHES",    start: 5,  end: 8,  color: "#4A148C" },
+  { name: "🛞 BRAKING SYSTEMS",        start: 9,  end: 12, color: "#B71C1C" },
+  { name: "💡 LIGHTING SYSTEM",        start: 13, end: 16, color: "#0D47A1" },
+  { name: "🪞 MIRRORS",                start: 17, end: 18, color: "#006064" },
+  { name: "🔥 FIRE SAFETY",            start: 19, end: 20, color: "#BF360C" },
+  { name: "🏗 STRUCTURAL PROTECTION",  start: 21, end: 22, color: "#37474F" },
+];
+
+// ── Backward compat aliases ──────────────────────────────────
+// Old code references these; keep them pointing to Dumper
+var DGMS_FEATURES = DGMS_DUMPER;
+var DGMS_HEADERS = DGMS_DUMPER_HEADERS;
+var FEATURE_GROUPS = DUMPER_GROUPS;
+
+// ── Sheet & column math ──────────────────────────────────────
+// Largest feature set determines column count
+var MAX_FEATS = Math.max(DGMS_DUMPER.length, DGMS_EXCAVATOR.length); // 22
+var MASTER_SHEET = "HEMM Reports";
+var FC = 6;                                // first feature column (after Type, Machine, Door#, ReportedAt, Note)
+var LC = FC + MAX_FEATS - 1;               // last feature column
+var TC = 5 + MAX_FEATS + 4;               // total columns = Type(1) + Machine(1) + Door(1) + Time(1) + Note(1) + Features(22) + Op(1) + FormA(1) + Auth(1) + Status(1) = 31
 
 // ── Alternating row colors ──
-const ROW_WHITE = "#FFFFFF";
-const ROW_GREY  = "#F7F9FB";  // very light grey — subtle alternation
+var ROW_WHITE = "#FFFFFF";
+var ROW_GREY  = "#F7F9FB";
 
 // ═══════════════════════════════════════════════════════════════
 //  ENTRY POINTS
@@ -59,7 +103,7 @@ function doPost(e) {
 }
 
 function doGet() {
-  return j({ ok: true, msg: "HEMM v2.2 — 20 features", features: 20 });
+  return j({ ok: true, msg: "HEMM v3.0 — Dumper + Excavator", dumperFeats: DGMS_DUMPER.length, excavatorFeats: DGMS_EXCAVATOR.length });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -99,7 +143,6 @@ function handleUpsert(reports) {
       updated++;
     } else {
       addRow(sh, r);
-      // Update noteMap so subsequent reports with same key won't duplicate
       if (r.firebaseKey) noteMap[r.firebaseKey] = sh.getLastRow();
       added++;
     }
@@ -119,13 +162,17 @@ function handleUpdateStatus(p) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  SHEET CREATION — Clean Professional Headers
+//  SHEET CREATION — Headers for both Dumper & Excavator
 // ═══════════════════════════════════════════════════════════════
 
 function getSheet(ss, name) {
   var sh = ss.getSheetByName(name);
   if (sh) {
-    upgradeSheetHeaders(sh);
+    // Check if sheet needs upgrading (e.g. missing Type column or wrong column count)
+    var lastCol = sh.getLastColumn();
+    if (lastCol > 0 && lastCol < TC) {
+      updateHeadersAndStyle(sh);
+    }
     return sh;
   }
   sh = ss.insertSheet(name);
@@ -133,95 +180,34 @@ function getSheet(ss, name) {
   return sh;
 }
 
-function upgradeSheetHeaders(sh) {
-  var lastCol = sh.getLastColumn();
-  if (lastCol < 4) return;
-  
-  // Find where the Operator column currently is (handle both "Operator" and "Operator Name")
-  var headers = sh.getRange(2, 1, 1, lastCol).getValues()[0];
-  var opColIdx = -1;
-  for (var i = 0; i < headers.length; i++) {
-    var h = String(headers[i] || "").trim();
-    if (h === "Operator" || h === "Operator Name") {
-      opColIdx = i + 1; // 1-based index
-      break;
-    }
-  }
-  
-  if (opColIdx === -1) return;
-  
-  // Feature columns start at FC (5) and end before opColIdx.
-  var currentFeatsCount = opColIdx - FC;
-  var targetFeatsCount = DGMS_FEATURES.length;
-  
-  if (currentFeatsCount < targetFeatsCount) {
-    var diff = targetFeatsCount - currentFeatsCount;
-    // Insert new columns before the Operator info columns to shift them right
-    sh.insertColumnsBefore(opColIdx, diff);
-    
-    // Refresh the header styles, names, and groups
-    updateHeadersAndStyle(sh);
-    
-    // Automatically repair and align data for old rows
-    fixMismatchedRowsInSheet(sh);
-  }
-}
-
-// Automatically shifts operator info columns to the right for old data rows
-// that were written before the new feature columns were inserted.
-function fixMismatchedRowsInSheet(sh) {
-  var lastRow = sh.getLastRow();
-  if (lastRow < 3) return;
-  
-  var range = sh.getRange(3, 1, lastRow - 2, TC);
-  var values = range.getValues();
-  var fixed = false;
-  
-  for (var i = 0; i < values.length; i++) {
-    var rowVals = values[i];
-    var col25 = String(rowVals[24] || "").trim(); // Manual Fire Ext. column (index 24)
-    
-    // If it contains a name instead of checkmark/cross, it needs shifting
-    if (col25 !== "✔" && col25 !== "✘" && col25 !== "") {
-      // Shift values to the right
-      rowVals[29] = rowVals[27]; // Status (index 29)
-      rowVals[28] = rowVals[26]; // Auth (index 28)
-      rowVals[27] = rowVals[25]; // Form A (index 27)
-      rowVals[26] = rowVals[24]; // Operator (index 26)
-      
-      // Set new features to default check
-      rowVals[24] = "✔"; 
-      rowVals[25] = "✔";
-      fixed = true;
-    }
-  }
-  
-  if (fixed) {
-    range.setValues(values);
-  }
-}
-
 function updateHeadersAndStyle(sh) {
-  // Unmerge any existing merges in row 1 first so we can re-merge cleanly
-  var maxCol = sh.getMaxColumns();
-  if (maxCol > 0) {
-    sh.getRange(1, 1, 1, maxCol).breakApart();
+  // Ensure enough columns exist
+  var currentCols = sh.getMaxColumns();
+  if (currentCols < TC) {
+    sh.insertColumnsAfter(currentCols, TC - currentCols);
   }
 
-  // ── ROW 1: Group header row ──
-  // Fill entire row dark
-  var r1 = sh.getRange(1, 1, 1, TC);
-  r1.setBackground("#1A1A2E");
+  // ── ROW 1: Group headers ──
+  // Clear row 1 first
+  sh.getRange(1, 1, 1, TC).clearContent().breakApart();
 
-  // Report Info (cols 1-4)
-  var info = sh.getRange(1, 1, 1, 4);
-  info.merge().setValue("📋 REPORT INFO");
-  info.setBackground("#1A1A2E").setFontColor("#FFFFFF")
+  // Type column
+  var typeR = sh.getRange(1, 1, 1, 1);
+  typeR.setValue("📋 TYPE");
+  typeR.setBackground("#1A1A2E").setFontColor("#FFFFFF")
     .setFontWeight("bold").setFontSize(9)
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
 
-  // Feature groups
-  FEATURE_GROUPS.forEach(function(g) {
+  // Report Info group (Machine, Door#, Reported At, Note)
+  var infoR = sh.getRange(1, 2, 1, 4);
+  infoR.merge().setValue("📋 REPORT INFO");
+  infoR.setBackground("#1A1A2E").setFontColor("#FFFFFF")
+    .setFontWeight("bold").setFontSize(9)
+    .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  // Feature groups — use Dumper groups as the primary layout
+  // (Both Dumper and Excavator features are mapped into the same MAX_FEATS columns)
+  DUMPER_GROUPS.forEach(function(g) {
     var col = FC + g.start;
     var span = g.end - g.start + 1;
     var rng = sh.getRange(1, col, 1, span);
@@ -239,8 +225,8 @@ function updateHeadersAndStyle(sh) {
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
 
   // ── ROW 2: Column sub-headers ──
-  var hdrs = ["Machine", "Door #", "Reported At", "Note"]
-    .concat(DGMS_HEADERS)
+  var hdrs = ["Type", "Machine", "Door #", "Reported At", "Note"]
+    .concat(DGMS_DUMPER_HEADERS)
     .concat(["Operator", "Form A", "Auth", "Status"]);
   sh.getRange(2, 1, 1, TC).setValues([hdrs]);
 
@@ -253,10 +239,11 @@ function updateHeadersAndStyle(sh) {
   // ── Sizing ──
   sh.setRowHeight(1, 30);
   sh.setRowHeight(2, 38);
-  sh.setColumnWidth(1, 85);   // Machine
-  sh.setColumnWidth(2, 65);   // Door #
-  sh.setColumnWidth(3, 135);  // Reported At
-  sh.setColumnWidth(4, 160);  // Note
+  sh.setColumnWidth(1, 85);   // Type
+  sh.setColumnWidth(2, 85);   // Machine
+  sh.setColumnWidth(3, 65);   // Door #
+  sh.setColumnWidth(4, 135);  // Reported At
+  sh.setColumnWidth(5, 160);  // Note
   for (var i = FC; i <= LC; i++) sh.setColumnWidth(i, 70);
   sh.setColumnWidth(LC + 1, 115); // Operator
   sh.setColumnWidth(LC + 2, 75);  // Form A
@@ -265,7 +252,7 @@ function updateHeadersAndStyle(sh) {
 
   // ── Freeze ──
   sh.setFrozenRows(2);
-  sh.setFrozenColumns(4);
+  sh.setFrozenColumns(5);
 
   // ── Thin borders on headers ──
   sh.getRange(1, 1, 2, TC).setBorder(
@@ -279,15 +266,27 @@ function updateHeadersAndStyle(sh) {
 
 function buildRow(r) {
   var issues = toSet(r.problems || "");
+  var eType = String(r.equipType || "Dumper").toUpperCase();
+  var isExcavator = (eType === "EXCAVATOR");
+  var featureList = isExcavator ? DGMS_EXCAVATOR : DGMS_DUMPER;
+
   var row = [
+    eType,
     r.machine || "—",
     r.tipperNo || "—",
     fmtTime(r.time),
     r.note || ""
   ];
-  DGMS_FEATURES.forEach(function(f) {
-    row.push(issues.has(f) ? "✘" : "✔");
-  });
+
+  // Map features to columns — always use MAX_FEATS columns
+  for (var i = 0; i < MAX_FEATS; i++) {
+    if (i < featureList.length) {
+      row.push(issues.has(featureList[i]) ? "✘" : "✔");
+    } else {
+      row.push("—"); // Pad with dash if this equipment type has fewer features
+    }
+  }
+
   row.push(r.operatorName || "—");
   row.push(r.operatorFormA || "—");
   row.push((r.operatorAuth || "unknown").toUpperCase());
@@ -305,34 +304,48 @@ function addRow(sh, r) {
 
 function styleRow(sh, row, r) {
   var full = sh.getRange(row, 1, 1, TC);
+  var eType = String(r.equipType || "Dumper").toUpperCase();
+  var isExcavator = (eType === "EXCAVATOR");
+  var featureList = isExcavator ? DGMS_EXCAVATOR : DGMS_DUMPER;
 
   // ── Alternating row color ──
   var bg = (row % 2 === 0) ? ROW_GREY : ROW_WHITE;
   full.setBackground(bg);
-  full.setFontSize(9).setFontColor("#2C3E50");  // dark text on light bg
+  full.setFontSize(9).setFontColor("#2C3E50");
   full.setVerticalAlignment("middle").setHorizontalAlignment("center");
   sh.setRowHeight(row, 28);
 
-  // ── Text columns left-aligned ──
-  sh.getRange(row, 1).setHorizontalAlignment("left").setFontWeight("bold");
-  sh.getRange(row, 2).setFontWeight("bold").setFontSize(12);
-  sh.getRange(row, 4).setHorizontalAlignment("left").setFontSize(8).setFontColor("#5D6D7E");
-  sh.getRange(row, LC + 1).setHorizontalAlignment("left");
+  // ── Type column styling ──
+  var typeCell = sh.getRange(row, 1);
+  typeCell.setFontWeight("bold").setFontSize(8);
+  if (isExcavator) {
+    typeCell.setFontColor("#E65100"); // Orange for Excavator
+  } else {
+    typeCell.setFontColor("#1565C0"); // Blue for Dumper
+  }
 
-  // ── Feature cells: ✔ green / ✘ red with clear contrast ──
-  for (var i = 0; i < DGMS_FEATURES.length; i++) {
+  // ── Text columns left-aligned ──
+  sh.getRange(row, 2).setHorizontalAlignment("left").setFontWeight("bold"); // Machine
+  sh.getRange(row, 3).setFontWeight("bold").setFontSize(12); // Door #
+  sh.getRange(row, 5).setHorizontalAlignment("left").setFontSize(8).setFontColor("#5D6D7E"); // Note
+  sh.getRange(row, LC + 1).setHorizontalAlignment("left"); // Operator
+
+  // ── Feature cells: ✔ green / ✘ red / — grey ──
+  for (var i = 0; i < MAX_FEATS; i++) {
     var cell = sh.getRange(row, FC + i);
     var v = String(cell.getValue());
     if (v === "✘") {
       cell.setFontColor("#FFFFFF").setBackground("#E74C3C").setFontWeight("bold").setFontSize(10);
+    } else if (v === "—") {
+      cell.setFontColor("#BDC3C7").setBackground(bg).setFontSize(9); // grey dash for N/A
     } else {
       cell.setFontColor("#27AE60").setBackground(bg).setFontSize(10);
     }
   }
 
-  // ── Auth cell — colored text only, no bg color ──
+  // ── Auth cell ──
   var authCell = sh.getRange(row, LC + 3);
-  authCell.setBackground(bg);  // keep row bg
+  authCell.setBackground(bg);
   var auth = String(authCell.getValue()).toLowerCase();
   if (auth === "authorized") {
     authCell.setFontColor("#1B8C3A").setFontWeight("bold").setFontSize(8);
@@ -342,7 +355,7 @@ function styleRow(sh, row, r) {
     authCell.setFontColor("#95A5A6").setFontSize(8);
   }
 
-  // ── Status cell — colored text only, no bg color ──
+  // ── Status cell ──
   styleStatus(sh.getRange(row, TC), r.status || "pending", bg);
 
   // ── Thin bottom border ──
@@ -353,7 +366,7 @@ function styleRow(sh, row, r) {
 function styleStatus(cell, status, bg) {
   var s = String(status).toLowerCase();
   cell.setValue(s.toUpperCase()).setFontWeight("bold").setFontSize(8);
-  cell.setBackground(bg || "#FFFFFF");  // keep row bg
+  cell.setBackground(bg || "#FFFFFF");
   if (s === "pending") {
     cell.setFontColor("#D35400");
   } else if (s === "reviewing") {
@@ -385,8 +398,6 @@ function findRow(sh, key) {
   return -1;
 }
 
-// Batch-load all firebaseKey notes into a { key: rowNumber } map
-// Used by handleUpsert to avoid calling findRow per-report (O(n^2) -> O(n))
 function buildNoteMap(sh) {
   var map = {};
   var last = sh.getLastRow();

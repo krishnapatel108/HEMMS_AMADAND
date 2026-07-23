@@ -478,7 +478,7 @@ body::before {
 }
 
 /* ── Claymorphism Styles ────────────────────────────────────── */
-.clay-card, .card, .mach-btn, .feat-btn, .numpad button, .conf-card, .auth-card, .done-card, .login-card, .admin-login-card, .op-modal-card, .admin-card, .stat-box, .cred-item, .v-row textarea, .rcard, .admin-rcard {
+.clay-card, .card, .mach-btn, .equip-btn, .feat-btn, .numpad button, .conf-card, .auth-card, .done-card, .login-card, .admin-login-card, .op-modal-card, .admin-card, .stat-box, .cred-item, .v-row textarea, .rcard, .admin-rcard {
   background: rgba(30, 30, 30, 0.5) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -492,7 +492,7 @@ body::before {
 }
 
 /* Active/selected states for cards */
-.mach-btn.sel, .feat-btn.sel {
+.mach-btn.sel, .equip-btn.sel, .feat-btn.sel {
   background: rgba(255, 107, 53, 0.15) !important;
   border-color: var(--or) !important;
   box-shadow: 

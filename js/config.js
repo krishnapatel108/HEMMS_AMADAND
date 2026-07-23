@@ -13,7 +13,7 @@ const SUPABASE_URL  = 'https://qycbpiotmgwjltduzlvf.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_4AozaOFzHIkWI2p0uVNByg_lbMvckjv';
 
 // Apps Script URL loaded from Supabase config table at runtime (not hardcoded for security)
-const FALLBACK_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvQQcUftmeXPn6u04AzDSyUA9ZYpQIRN1R1Es04pp0DJUu3fNn_te2NEkAgJsBNUblZQ/exec';
+const FALLBACK_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSow-EC5MFMfNvrl-N-hVlBPrsLgjtyj-foqa8I1Zhn_xSy-V_kJF7cQVogo3bs0jnBQ/exec';
 
 // ── App Version ──────────────────────────────────────────────
 const APP_VERSION = '7.0.0-secure';

@@ -177,6 +177,8 @@ function goTo(screenId) {
         hdrRight.style.display = hideOn.includes(screenId) ? 'none' : 'flex';
       }
     }
+  }
+
   // If going to status verification screen → check record
   if (screenId === 's-status') renderMachineVerificationScreen();
 

@@ -97,7 +97,7 @@ function doGet(e) {
     if (p && p.action === "check") {
       return j(handleCheckMachine(p));
     }
-    return j({ ok: true, msg: "HEMM v3.4 — Red Highlight + MachineList", dumperFeats: DGMS_DUMPER.length, excavatorFeats: DGMS_EXCAVATOR.length });
+    return j({ ok: true, msg: "HEMM v3.5 — MachineList (Old=Green, New=Red)", dumperFeats: DGMS_DUMPER.length, excavatorFeats: DGMS_EXCAVATOR.length });
   } catch (err) {
     return j({ ok: false, error: err.message });
   }
@@ -268,16 +268,19 @@ function updateMachineListSheet(ss, r) {
     }
   }
 
-  var redBg   = "#f8d7da";
-  var redText = "#721c24";
+  var greenBg   = "#d4edda";
+  var greenText = "#155724";
+
+  var redBg     = "#f8d7da";
+  var redText   = "#721c24";
 
   if (foundRowIndex > 0) {
-    // ── UPDATE existing row ──
+    // ── UPDATE existing row (GREEN) ──
     sh.getRange(foundRowIndex, 4).setValue(nowStr);
-    sh.getRange(foundRowIndex, 1, 1, 4).setBackground(redBg).setFontColor(redText);
+    sh.getRange(foundRowIndex, 1, 1, 4).setBackground(greenBg).setFontColor(greenText);
     Logger.log("MachineList: UPDATED existing row " + foundRowIndex + " for " + brand + " #" + doorNo);
   } else {
-    // ── INSERT new row ──
+    // ── INSERT new row (RED) ──
     // Use getRange().setValues() instead of appendRow() for reliability with formatted sheets
     var newRow = lastRow + 1;
     sh.getRange(newRow, 1, 1, 4).setValues([[equipType, doorNo, brand, nowStr]]);

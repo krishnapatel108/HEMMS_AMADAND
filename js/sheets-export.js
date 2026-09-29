@@ -404,10 +404,10 @@ function checkMachineStatusLocal(equipType, machine, doorNo) {
     const lastTime = cache[key];
     if (lastTime) {
       const diffDays = Math.floor((Date.now() - lastTime) / 86400000);
-      if (diffDays < 30) {
-        const daysLeft = 30 - diffDays;
+      if (diffDays < 60) {
+        const daysLeft = 60 - diffDays;
         const lastDate = new Date(lastTime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-        const nextDate = new Date(lastTime + (30 * 86400000)).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const nextDate = new Date(lastTime + (60 * 86400000)).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
         return { ok: true, blocked: true, diffDays: diffDays, daysLeft: daysLeft, lastDate: lastDate, nextDate: nextDate };
       }
     }

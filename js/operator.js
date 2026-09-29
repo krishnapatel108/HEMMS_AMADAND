@@ -340,9 +340,9 @@ async function renderMachineVerificationScreen() {
       cardContainer.innerHTML = `
         <div class="st-card st-warn">
           <div class="st-icon">🛑</div>
-          <div class="st-title">सुरक्षा जाँच इस महीने हो चुकी है</div>
-          <div class="st-sub">ALREADY SUBMITTED THIS MONTH</div>
-          <div class="st-desc">मशीन <b>${escapeHtml(label)}</b> की सुरक्षा जाँच पिछले 30 दिनों के भीतर दर्ज की जा चुकी है।</div>
+          <div class="st-title">सुरक्षा जाँच 2 महीने में हो चुकी है</div>
+          <div class="st-sub">ALREADY SUBMITTED IN LAST 2 MONTHS</div>
+          <div class="st-desc">मशीन <b>${escapeHtml(label)}</b> की सुरक्षा जाँच पिछले 2 महीनों (60 दिनों) के भीतर दर्ज की जा चुकी है।</div>
           <div class="st-details">
             <div class="st-detail-row"><span>📅 <b>पिछली जाँच / Last Check:</b></span> <span>${escapeHtml(res.lastDate || '—')}</span></div>
             <div class="st-detail-row"><span>🗓️ <b>अगली उपलब्ध तिथि / Next Date:</b></span> <span>${escapeHtml(res.nextDate || '—')}</span></div>
@@ -367,7 +367,7 @@ async function renderMachineVerificationScreen() {
           <div class="st-icon">🟢</div>
           <div class="st-title">सुरक्षा जाँच की जा सकती है</div>
           <div class="st-sub">READY FOR SAFETY CHECK</div>
-          <div class="st-desc">मशीन <b>${escapeHtml(label)}</b> की पिछले 30 दिनों में कोई सुरक्षा जाँच दर्ज नहीं है। आप सुरक्षा उपकरण सूची पर आगे बढ़ सकते हैं।</div>
+          <div class="st-desc">मशीन <b>${escapeHtml(label)}</b> की पिछले 2 महीनों (60 दिनों) में कोई सुरक्षा जाँच दर्ज नहीं है। आप आगे बढ़ सकते हैं।</div>
         </div>
       `;
     }

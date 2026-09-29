@@ -352,3 +352,74 @@ function startSheetsRetryProcessor() {
     setTimeout(function() { _processRetryQueue(); }, 2000);
   });
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  30-DAY DUPLICATE CHECK — Query Sheet or Local Cache
+// ═══════════════════════════════════════════════════════════════
+
+async function checkMachineStatusFromSheet(equipType, machine, doorNo) {
+  if (!machine || !doorNo) {
+    return { ok: true, blocked: false };
+  }
+
+  // 1. Try local cache first if network is offline
+  if (!navigator.onLine) {
+    return checkMachineStatusLocal(equipType, machine, doorNo);
+  }
+
+  if (!APPS_SCRIPT_URL) {
+    await loadSheetsConfig();
+  }
+
+  if (!APPS_SCRIPT_URL) {
+    return checkMachineStatusLocal(equipType, machine, doorNo);
+  }
+
+  try {
+    const url = APPS_SCRIPT_URL + '?action=check' +
+      '&equipType=' + encodeURIComponent(equipType || 'Dumper') +
+      '&machine=' + encodeURIComponent(machine || '') +
+      '&doorNo=' + encodeURIComponent(doorNo || '');
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    // If Apps Script returns blocked, save to local cache too
+    if (data && data.blocked) {
+      saveMachineStatusLocal(equipType, machine, doorNo);
+    }
+
+    return data;
+  } catch (err) {
+    console.warn('checkMachineStatusFromSheet fallback to local:', err.message);
+    return checkMachineStatusLocal(equipType, machine, doorNo);
+  }
+}
+
+function checkMachineStatusLocal(equipType, machine, doorNo) {
+  try {
+    const cache = JSON.parse(localStorage.getItem('hemm_machine_checks') || '{}');
+    const key = (equipType + '_' + machine + '_' + doorNo).toUpperCase();
+    const lastTime = cache[key];
+    if (lastTime) {
+      const diffDays = Math.floor((Date.now() - lastTime) / 86400000);
+      if (diffDays < 30) {
+        const daysLeft = 30 - diffDays;
+        const lastDate = new Date(lastTime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const nextDate = new Date(lastTime + (30 * 86400000)).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        return { ok: true, blocked: true, diffDays: diffDays, daysLeft: daysLeft, lastDate: lastDate, nextDate: nextDate };
+      }
+    }
+  } catch (_) {}
+  return { ok: true, blocked: false };
+}
+
+function saveMachineStatusLocal(equipType, machine, doorNo) {
+  try {
+    const cache = JSON.parse(localStorage.getItem('hemm_machine_checks') || '{}');
+    const key = (equipType + '_' + machine + '_' + doorNo).toUpperCase();
+    cache[key] = Date.now();
+    localStorage.setItem('hemm_machine_checks', JSON.stringify(cache));
+  } catch (_) {}
+}

@@ -265,6 +265,8 @@ function selMach(btn) {
    NUMPAD — DOOR / TIPPER NUMBER (STEP 2)
    ═══════════════════════════════════════════════════════════════ */
 
+let _dupCheckTimer = null;
+
 function np(key) {
   if (key === 'C') {
     tipperNo = '';
@@ -282,12 +284,53 @@ function np(key) {
     disp.classList.toggle('has', tipperNo.length > 0);
   }
 
-  // Enable/disable next
-  const nxt = $('btn-num-nxt');
-  if (nxt) nxt.disabled = tipperNo.length === 0;
+  // Enable/disable next & check 30-day submission status
+  triggerDupCheck();
 
   // Update problem-screen pill
   updateProbPill();
+}
+
+function triggerDupCheck() {
+  const card = $('dup-warn-card');
+  const details = $('dup-warn-details');
+  const nxt = $('btn-num-nxt');
+
+  if (!tipperNo || tipperNo.length === 0) {
+    if (card) card.style.display = 'none';
+    if (nxt) nxt.disabled = true;
+    return;
+  }
+
+  if (_dupCheckTimer) clearTimeout(_dupCheckTimer);
+
+  if (details) {
+    details.innerHTML = '🔍 रिकॉर्ड जाँच रहे हैं... / Checking records...';
+    if (card) card.style.display = 'block';
+  }
+
+  _dupCheckTimer = setTimeout(async () => {
+    if (typeof checkMachineStatusFromSheet !== 'function') {
+      if (card) card.style.display = 'none';
+      if (nxt) nxt.disabled = false;
+      return;
+    }
+
+    const res = await checkMachineStatusFromSheet(equipType, machine, tipperNo);
+    if (res && res.blocked) {
+      if (card) card.style.display = 'block';
+      if (details) {
+        details.innerHTML =
+          '📅 <b>पिछली जाँच / Last Check:</b> ' + escapeHtml(res.lastDate || '—') + '<br>' +
+          '⏳ <b>अगली उपलब्ध तिथि / Next Available:</b> ' + escapeHtml(res.nextDate || '—') +
+          ' <span style="color:#e74c3c;font-weight:bold">(' + res.daysLeft + ' दिन शेष / days left)</span>';
+      }
+      if (nxt) nxt.disabled = true;
+    } else {
+      if (card) card.style.display = 'none';
+      if (nxt) nxt.disabled = false;
+    }
+  }, 400);
 }
 
 function updateProbPill() {
@@ -743,6 +786,11 @@ async function doSubmit(authInfo) {
 
   // Navigate to done screen first (optimistic)
   showDoneScreen(report);
+
+  // Save to local cache for 30-day duplicate prevention
+  if (typeof saveMachineStatusLocal === 'function') {
+    saveMachineStatusLocal(equipType, machine, tipperNo);
+  }
 
   // Trigger Google Sheets append immediately and concurrently! (Fire-and-forget, independent of Supabase)
   if (typeof appendReportToSheet === 'function') {

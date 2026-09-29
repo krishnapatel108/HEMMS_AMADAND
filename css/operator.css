@@ -276,40 +276,133 @@
 }
 .t-disp.has { opacity: 1; }
 
-/* Duplicate Check Warning Card */
-.dup-warn-card {
-  background: rgba(231, 76, 60, 0.12);
-  border: 1.5px solid #e74c3c;
-  border-radius: 14px;
-  padding: 12px 16px;
-  margin: 8px auto 14px;
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2.5: MACHINE RECORD VERIFICATION SCREEN
+   ═══════════════════════════════════════════════════════════════ */
+
+.status-card-container {
+  margin: 16px auto;
   width: 100%;
-  max-width: 340px;
+  max-width: 360px;
+}
+
+.st-card {
+  border-radius: 16px;
+  padding: 20px 18px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   animation: fadeIn .3s ease-out;
 }
-.dup-warn-title {
-  color: #e74c3c;
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 2px;
+
+.st-card.st-loading {
+  background: var(--c1);
+  border: 1.5px solid var(--bdr);
 }
-.dup-warn-sub {
-  color: var(--mut);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+
+.st-card.st-ok {
+  background: rgba(46, 204, 113, 0.1);
+  border: 1.5px solid #2ecc71;
+}
+
+.st-card.st-warn {
+  background: rgba(231, 76, 60, 0.1);
+  border: 1.5px solid #e74c3c;
+}
+
+.st-card.st-info {
+  background: rgba(52, 152, 219, 0.1);
+  border: 1.5px solid #3498db;
+}
+
+.st-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3.5px solid var(--bdr);
+  border-top-color: var(--or);
+  border-radius: 50%;
+  margin: 10px auto 14px;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.st-icon {
+  font-size: 36px;
   margin-bottom: 8px;
 }
-.dup-warn-details {
+
+.st-title {
+  font-family: var(--cd);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 3px;
   color: var(--txt);
+}
+.st-warn .st-title { color: #e74c3c; }
+.st-ok .st-title { color: #2ecc71; }
+.st-info .st-title { color: #3498db; }
+
+.st-sub {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--mut);
+  margin-bottom: 12px;
+}
+
+.st-desc {
   font-size: 13px;
+  color: var(--txt);
   line-height: 1.5;
-  background: var(--c2);
-  padding: 8px 12px;
-  border-radius: 8px;
+}
+
+.st-details {
+  background: var(--c1);
   border: 1px solid var(--bdr);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.st-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--bdr);
+}
+.st-detail-row:last-child { border-bottom: none; }
+
+.st-badge {
+  display: inline-block;
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+  width: 100%;
+}
+
+.nxt-override {
+  background: rgba(231, 76, 60, 0.15);
+  border: 1.5px solid #e74c3c;
+  color: #e74c3c;
+  border-radius: 12px;
+  font-family: var(--cd);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nxt-override:hover, .nxt-override:active {
+  background: #e74c3c;
+  color: #ffffff;
 }
 
 .numpad {

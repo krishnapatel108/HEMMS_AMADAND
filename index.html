@@ -150,13 +150,6 @@
       
       <div class="t-disp" id="t-disp" aria-live="polite">—</div>
       
-      <!-- Duplicate Submission Warning Card -->
-      <div id="dup-warn-card" class="dup-warn-card" style="display: none;">
-        <div class="dup-warn-title" id="dup-warn-title">⛔ सुरक्षा जाँच इस महीने हो चुकी है</div>
-        <div class="dup-warn-sub" id="dup-warn-sub">Already submitted this month</div>
-        <div class="dup-warn-details" id="dup-warn-details"></div>
-      </div>
-      
       <div class="numpad">
         <button class="nk" onclick="np(1)">1</button>
         <button class="nk" onclick="np(2)">2</button>
@@ -174,7 +167,31 @@
 
       <div class="nav-row">
         <button id="btn-num-back" class="back" onclick="goTo('s-mach')">← वापस / Back</button>
-        <button id="btn-num-nxt" class="nxt" disabled onclick="goTo('s-prob')">आगे → / Next</button>
+        <button id="btn-num-nxt" class="nxt" disabled onclick="goTo('s-status')">आगे → / Next</button>
+      </div>
+    </section>
+
+    <!-- ── Step 2.5: Machine Record Check Screen ───────────────── -->
+    <section class="screen" id="s-status">
+      <div class="step-pill">VERIFICATION</div>
+      <div class="prog-wrap" aria-hidden="true">
+        <div class="prog-s done"></div>
+        <div class="prog-s done"></div>
+        <div class="prog-s active"></div>
+        <div class="prog-s"></div>
+        <div class="prog-s"></div>
+      </div>
+
+      <div class="t-pill" id="status-pill">🚛 —</div>
+      <h2 class="q-h">मशीन स्थिति की जाँच</h2>
+      <p class="q-e">CHECKING MACHINE RECORD</p>
+
+      <div id="status-card-container" class="status-card-container" style="width: 100%; max-width: 360px;">
+        <!-- Dynamic loading/ok/warn cards rendered via JS -->
+      </div>
+
+      <div class="nav-row" id="status-nav-row" style="flex-direction: column; gap: 10px; margin-top: 18px; width: 100%; max-width: 360px;">
+        <!-- Dynamic option buttons rendered via JS -->
       </div>
     </section>
 
@@ -213,7 +230,7 @@
       </div>
 
       <div class="nav-row">
-        <button id="btn-prob-back" class="back" onclick="goTo('s-num')">← वापस / Back</button>
+        <button id="btn-prob-back" class="back" onclick="goTo('s-status')">← वापस / Back</button>
         <button id="btn-prob-nxt" class="nxt" disabled onclick="goTo('s-conf')">आगे → / Next</button>
       </div>
     </section>

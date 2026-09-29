@@ -177,7 +177,8 @@ function goTo(screenId) {
         hdrRight.style.display = hideOn.includes(screenId) ? 'none' : 'flex';
       }
     }
-  }
+  // If going to status verification screen → check record
+  if (screenId === 's-status') renderMachineVerificationScreen();
 
   // If going to confirm → build it
   if (screenId === 's-conf') buildConfirm();
@@ -194,7 +195,7 @@ function goTo(screenId) {
 
 /* ── Progress Bar ──────────────────────────────────────────── */
 function updateProgress(screenId) {
-  const steps = ['s-mach', 's-num', 's-prob', 's-conf'];
+  const steps = ['s-mach', 's-num', 's-status', 's-prob', 's-conf'];
   const idx = steps.indexOf(screenId);
   // Each screen section now has its own 5 prog-s bars;
   // we only update those inside the currently-active screen.
@@ -265,8 +266,6 @@ function selMach(btn) {
    NUMPAD — DOOR / TIPPER NUMBER (STEP 2)
    ═══════════════════════════════════════════════════════════════ */
 
-let _dupCheckTimer = null;
-
 function np(key) {
   if (key === 'C') {
     tipperNo = '';
@@ -284,53 +283,100 @@ function np(key) {
     disp.classList.toggle('has', tipperNo.length > 0);
   }
 
-  // Enable/disable next & check 30-day submission status
-  triggerDupCheck();
+  // Enable/disable next
+  const nxt = $('btn-num-nxt');
+  if (nxt) nxt.disabled = tipperNo.length === 0;
 
   // Update problem-screen pill
   updateProbPill();
 }
 
-function triggerDupCheck() {
-  const card = $('dup-warn-card');
-  const details = $('dup-warn-details');
-  const nxt = $('btn-num-nxt');
+/* ═══════════════════════════════════════════════════════════════
+   MACHINE RECORD VERIFICATION (STEP 2.5)
+   ═══════════════════════════════════════════════════════════════ */
 
-  if (!tipperNo || tipperNo.length === 0) {
-    if (card) card.style.display = 'none';
-    if (nxt) nxt.disabled = true;
-    return;
+async function renderMachineVerificationScreen() {
+  const pill = $('status-pill');
+  const cardContainer = $('status-card-container');
+  const navRow = $('status-nav-row');
+
+  const machineList = equipType === 'Excavator' ? MACHINES_EXCAVATOR : MACHINES;
+  const machData = machineList.find(m => m.id === machine);
+  const emoji = machData ? machData.emoji : (equipType === 'Excavator' ? '🏗️' : '🚛');
+  const label = emoji + ' ' + machine + ' #' + (tipperNo || '—');
+
+  if (pill) pill.textContent = label;
+
+  // 1. Render Loading State
+  if (cardContainer) {
+    cardContainer.innerHTML = `
+      <div class="st-card st-loading">
+        <div class="st-spinner"></div>
+        <div class="st-title">रिकॉर्ड जाँच रहे हैं...</div>
+        <div class="st-sub">CHECKING GOOGLE SHEET RECORD</div>
+        <div class="st-desc">मशीन <b>${escapeHtml(label)}</b> का पिछला इतिहास खोजा जा रहा है...</div>
+      </div>
+    `;
   }
 
-  if (_dupCheckTimer) clearTimeout(_dupCheckTimer);
-
-  if (details) {
-    details.innerHTML = '🔍 रिकॉर्ड जाँच रहे हैं... / Checking records...';
-    if (card) card.style.display = 'block';
+  if (navRow) {
+    navRow.innerHTML = `
+      <button class="back" style="width: 100%;" onclick="goTo('s-num')">← वापस / Back</button>
+    `;
   }
 
-  _dupCheckTimer = setTimeout(async () => {
-    if (typeof checkMachineStatusFromSheet !== 'function') {
-      if (card) card.style.display = 'none';
-      if (nxt) nxt.disabled = false;
-      return;
+  // 2. Fetch Machine Record Status
+  let res = { ok: true, blocked: false };
+  if (typeof checkMachineStatusFromSheet === 'function') {
+    res = await checkMachineStatusFromSheet(equipType, machine, tipperNo);
+  }
+
+  // 3. Render Result State
+  if (res && res.blocked) {
+    // ALREADY SUBMITTED IN LAST 30 DAYS (WARNING CARD + USER OPTIONS)
+    if (cardContainer) {
+      cardContainer.innerHTML = `
+        <div class="st-card st-warn">
+          <div class="st-icon">🛑</div>
+          <div class="st-title">सुरक्षा जाँच इस महीने हो चुकी है</div>
+          <div class="st-sub">ALREADY SUBMITTED THIS MONTH</div>
+          <div class="st-desc">मशीन <b>${escapeHtml(label)}</b> की सुरक्षा जाँच पिछले 30 दिनों के भीतर दर्ज की जा चुकी है।</div>
+          <div class="st-details">
+            <div class="st-detail-row"><span>📅 <b>पिछली जाँच / Last Check:</b></span> <span>${escapeHtml(res.lastDate || '—')}</span></div>
+            <div class="st-detail-row"><span>🗓️ <b>अगली उपलब्ध तिथि / Next Date:</b></span> <span>${escapeHtml(res.nextDate || '—')}</span></div>
+            <div class="st-badge">⏳ ${res.daysLeft} दिन शेष / days remaining</div>
+          </div>
+        </div>
+      `;
     }
 
-    const res = await checkMachineStatusFromSheet(equipType, machine, tipperNo);
-    if (res && res.blocked) {
-      if (card) card.style.display = 'block';
-      if (details) {
-        details.innerHTML =
-          '📅 <b>पिछली जाँच / Last Check:</b> ' + escapeHtml(res.lastDate || '—') + '<br>' +
-          '⏳ <b>अगली उपलब्ध तिथि / Next Available:</b> ' + escapeHtml(res.nextDate || '—') +
-          ' <span style="color:#e74c3c;font-weight:bold">(' + res.daysLeft + ' दिन शेष / days left)</span>';
-      }
-      if (nxt) nxt.disabled = true;
-    } else {
-      if (card) card.style.display = 'none';
-      if (nxt) nxt.disabled = false;
+    if (navRow) {
+      navRow.innerHTML = `
+        <button class="back" style="width: 100%; padding: 14px; font-weight: 700;" onclick="goTo('s-num')">← दूसरी मशीन चुनें / Select Different Machine</button>
+        <button class="nxt-override" style="width: 100%; padding: 12px; font-size: 13px;" onclick="goTo('s-prob')">⚠️ फिर भी जाँच दर्ज करें / Proceed Anyway (Re-Check)</button>
+      `;
     }
-  }, 400);
+
+  } else {
+    // CLEAR / READY FOR CHECK
+    if (cardContainer) {
+      cardContainer.innerHTML = `
+        <div class="st-card st-ok">
+          <div class="st-icon">🟢</div>
+          <div class="st-title">सुरक्षा जाँच की जा सकती है</div>
+          <div class="st-sub">READY FOR SAFETY CHECK</div>
+          <div class="st-desc">मशीन <b>${escapeHtml(label)}</b> की पिछले 30 दिनों में कोई सुरक्षा जाँच दर्ज नहीं है। आप सुरक्षा उपकरण सूची पर आगे बढ़ सकते हैं।</div>
+        </div>
+      `;
+    }
+
+    if (navRow) {
+      navRow.innerHTML = `
+        <button class="nxt" style="width: 100%; font-size: 16px; padding: 16px;" onclick="goTo('s-prob')">आगे बढ़ें → / Proceed to Safety Check</button>
+        <button class="back" style="width: 100%;" onclick="goTo('s-num')">← वापस / Back</button>
+      `;
+    }
+  }
 }
 
 function updateProbPill() {

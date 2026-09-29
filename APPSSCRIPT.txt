@@ -97,7 +97,7 @@ function doGet(e) {
     if (p && p.action === "check") {
       return j(handleCheckMachine(p));
     }
-    return j({ ok: true, msg: "HEMM v3.2 — Dumper + Excavator 30-Day Check", dumperFeats: DGMS_DUMPER.length, excavatorFeats: DGMS_EXCAVATOR.length });
+    return j({ ok: true, msg: "HEMM v3.3 — 2-Month Check + MachineList", dumperFeats: DGMS_DUMPER.length, excavatorFeats: DGMS_EXCAVATOR.length });
   } catch (err) {
     return j({ ok: false, error: err.message });
   }
@@ -107,49 +107,71 @@ function handleCheckMachine(p) {
   if (!p.machine || !p.doorNo) {
     return { ok: false, error: "Missing parameters" };
   }
-  var isExcavator = (String(p.equipType || "Dumper").toUpperCase() === "EXCAVATOR");
-  var sheetName = isExcavator ? MASTER_EXCAVATOR_SHEET : MASTER_DUMPER_SHEET;
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName(sheetName);
-  if (!sh) return { ok: true, blocked: false };
-
-  var lastRow = sh.getLastRow();
-  if (lastRow < 3) return { ok: true, blocked: false };
-
-  // Col 1: Machine, Col 2: Door #, Col 3: Reported At
-  var data = sh.getRange(3, 1, lastRow - 2, 3).getValues();
   var targetMach = String(p.machine).trim().toUpperCase();
   var targetDoor = String(p.doorNo).trim().toUpperCase();
-
   var now = new Date();
   var newestMatchDate = null;
 
-  for (var i = data.length - 1; i >= 0; i--) {
-    var m = String(data[i][0] || "").trim().toUpperCase();
-    var d = String(data[i][1] || "").trim().toUpperCase();
-    if (m === targetMach && d === targetDoor) {
-      var dateVal = data[i][2];
-      if (dateVal) {
-        var parsedDate = new Date(dateVal);
-        if (!isNaN(parsedDate.getTime())) {
-          newestMatchDate = parsedDate;
-          break;
+  // ── Source 1: Check Report Sheet (HEMM Reports / Excavator Reports) ──
+  var isExcavator = (String(p.equipType || "Dumper").toUpperCase() === "EXCAVATOR");
+  var reportSheetName = isExcavator ? MASTER_EXCAVATOR_SHEET : MASTER_DUMPER_SHEET;
+  var reportSh = ss.getSheetByName(reportSheetName);
+  if (reportSh && reportSh.getLastRow() >= 3) {
+    var reportData = reportSh.getRange(3, 1, reportSh.getLastRow() - 2, 3).getValues();
+    for (var i = reportData.length - 1; i >= 0; i--) {
+      var m = String(reportData[i][0] || "").trim().toUpperCase();
+      var d = String(reportData[i][1] || "").trim().toUpperCase();
+      if (m === targetMach && d === targetDoor) {
+        var dateVal = reportData[i][2];
+        if (dateVal) {
+          var parsed = (dateVal instanceof Date) ? dateVal : new Date(String(dateVal));
+          if (!isNaN(parsed.getTime())) {
+            if (!newestMatchDate || parsed.getTime() > newestMatchDate.getTime()) {
+              newestMatchDate = parsed;
+            }
+            break;
+          }
         }
       }
     }
   }
 
+  // ── Source 2: Check MachineList sheet ──
+  var mlSh = ss.getSheetByName("MachineList");
+  if (mlSh && mlSh.getLastRow() >= 2) {
+    var mlData = mlSh.getRange(2, 1, mlSh.getLastRow() - 1, 4).getValues();
+    var equipUpper = String(p.equipType || "Dumper").trim().toUpperCase();
+    for (var j = 0; j < mlData.length; j++) {
+      var eType  = String(mlData[j][0] || "").trim().toUpperCase();
+      var dNo    = String(mlData[j][1] || "").trim().toUpperCase();
+      var mBrand = String(mlData[j][2] || "").trim().toUpperCase();
+      if (eType === equipUpper && dNo === targetDoor && mBrand === targetMach) {
+        var mlDate = mlData[j][3];
+        if (mlDate) {
+          var mlParsed = (mlDate instanceof Date) ? mlDate : new Date(String(mlDate));
+          if (!isNaN(mlParsed.getTime())) {
+            if (!newestMatchDate || mlParsed.getTime() > newestMatchDate.getTime()) {
+              newestMatchDate = mlParsed;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // ── No previous submission found ──
   if (!newestMatchDate) {
     return { ok: true, blocked: false };
   }
 
   var diffMs = now.getTime() - newestMatchDate.getTime();
-  var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  var diffDays = Math.floor(diffMs / 86400000);
 
   // 2 MONTHS (60 DAYS) COOLDOWN CHECK
   if (diffDays < 60) {
     var daysLeft = 60 - diffDays;
-    var nextAvailable = new Date(newestMatchDate.getTime() + (60 * 24 * 60 * 60 * 1000));
+    var nextAvailable = new Date(newestMatchDate.getTime() + (60 * 86400000));
     var formattedLast = newestMatchDate.toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' });
     var formattedNext = nextAvailable.toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -197,73 +219,101 @@ function handleAppend(r) {
 }
 
 function updateMachineListSheet(ss, r) {
-  var sheetName = "MachineList";
-  var sh = ss.getSheetByName(sheetName);
+  var ML_SHEET = "MachineList";
+  var sh = ss.getSheetByName(ML_SHEET);
 
+  // ── Auto-create MachineList tab if missing ──
   if (!sh) {
-    sh = ss.insertSheet(sheetName);
+    sh = ss.insertSheet(ML_SHEET);
     sh.getRange(1, 1, 1, 4).setValues([["EQUIPMENT TYPE", "Door Number", "MACHINE BRAND", "TESTING ON"]]);
     sh.getRange(1, 1, 1, 4).setFontWeight("bold").setBackground("#2c3e50").setFontColor("#ffffff");
     sh.setFrozenRows(1);
+    sh.setColumnWidth(1, 140);
+    sh.setColumnWidth(2, 110);
+    sh.setColumnWidth(3, 140);
+    sh.setColumnWidth(4, 170);
   }
 
-  var equipType = String(r.equipType || "Dumper").trim();
-  var doorNo = String(r.tipperNo || "").trim();
-  var brand = String(r.machine || "").trim();
-  var nowStr = r.time ? new Date(r.time).toLocaleString("en-IN") : new Date().toLocaleString("en-IN");
+  // ── Extract fields (with fallback) ──
+  var equipType = String(r.equipType || r.equip_type || "Dumper").trim();
+  var doorNo    = String(r.tipperNo  || r.tipper_no  || "").trim();
+  var brand     = String(r.machine   || "").trim();
+  var nowStr    = new Date().toLocaleString("en-IN");
+  if (r.time) {
+    try { nowStr = new Date(r.time).toLocaleString("en-IN"); } catch(_) {}
+  }
 
+  // Validate — can't proceed without doorNo and brand
+  if (!doorNo || !brand) {
+    Logger.log("MachineList: skipping — missing doorNo or brand. doorNo=" + doorNo + " brand=" + brand);
+    return;
+  }
+
+  // ── Search for existing row ──
   var lastRow = sh.getLastRow();
   var foundRowIndex = -1;
 
   if (lastRow >= 2) {
-    var data = sh.getRange(2, 1, lastRow - 1, 3).getValues();
+    var data = sh.getRange(2, 1, lastRow - 1, 4).getValues();
     for (var i = 0; i < data.length; i++) {
-      var eType = String(data[i][0] || "").trim().toUpperCase();
-      var dNo = String(data[i][1] || "").trim().toUpperCase();
+      // Coerce to string for reliable comparison (handles numeric Door Numbers in sheet)
+      var eType  = String(data[i][0] || "").trim().toUpperCase();
+      var dNo    = String(data[i][1] || "").trim().toUpperCase();
       var mBrand = String(data[i][2] || "").trim().toUpperCase();
 
       if (eType === equipType.toUpperCase() && dNo === doorNo.toUpperCase() && mBrand === brand.toUpperCase()) {
-        foundRowIndex = i + 2;
+        foundRowIndex = i + 2;  // Sheet row number (1-indexed, header is row 1)
         break;
       }
     }
   }
 
-  var greenBg = "#d4edda"; // Soft green background
-  var darkGreenText = "#155724";
+  var greenBg   = "#d4edda";
+  var greenText = "#155724";
 
   if (foundRowIndex > 0) {
-    // Update existing row
+    // ── UPDATE existing row ──
     sh.getRange(foundRowIndex, 4).setValue(nowStr);
-    sh.getRange(foundRowIndex, 1, 1, 4).setBackground(greenBg).setFontColor(darkGreenText);
+    sh.getRange(foundRowIndex, 1, 1, 4).setBackground(greenBg).setFontColor(greenText);
+    Logger.log("MachineList: UPDATED existing row " + foundRowIndex + " for " + brand + " #" + doorNo);
   } else {
-    // Append new row
-    sh.appendRow([equipType, doorNo, brand, nowStr]);
-    var newRowIndex = sh.getLastRow();
-    sh.getRange(newRowIndex, 1, 1, 4).setBackground(greenBg).setFontColor(darkGreenText);
+    // ── INSERT new row ──
+    // Use getRange().setValues() instead of appendRow() for reliability with formatted sheets
+    var newRow = lastRow + 1;
+    sh.getRange(newRow, 1, 1, 4).setValues([[equipType, doorNo, brand, nowStr]]);
+    sh.getRange(newRow, 1, 1, 4).setBackground(greenBg).setFontColor(greenText);
+    Logger.log("MachineList: INSERTED new row " + newRow + " for " + brand + " #" + doorNo);
   }
 
-  // Reset rows older than 60 days (2 months) back to normal white background
+  // ── Reset expired rows (> 60 days) ──
   resetExpiredMachineListRows(sh);
 }
 
 function resetExpiredMachineListRows(sh) {
   var lastRow = sh.getLastRow();
   if (lastRow < 2) return;
+
   var data = sh.getRange(2, 4, lastRow - 1, 1).getValues();
   var now = new Date();
 
   for (var i = 0; i < data.length; i++) {
-    var dateStr = data[i][0];
-    if (dateStr) {
-      var dateVal = new Date(dateStr);
-      if (!isNaN(dateVal.getTime())) {
-        var diffDays = Math.floor((now.getTime() - dateVal.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays >= 60) {
-          // Reset row background to white if older than 2 months
-          sh.getRange(i + 2, 1, 1, 4).setBackground("#ffffff").setFontColor("#000000");
-        }
-      }
+    var val = data[i][0];
+    if (!val) continue;
+
+    var dateVal;
+    if (val instanceof Date) {
+      dateVal = val;
+    } else {
+      dateVal = new Date(String(val));
+    }
+
+    if (isNaN(dateVal.getTime())) continue;
+
+    var diffDays = Math.floor((now.getTime() - dateVal.getTime()) / 86400000);
+    if (diffDays >= 60) {
+      // Reset row background to white — testing period expired
+      sh.getRange(i + 2, 1, 1, 4).setBackground("#ffffff").setFontColor("#000000");
+      sh.getRange(i + 2, 4).setValue("");  // Clear the TESTING ON date
     }
   }
 }

@@ -18,6 +18,7 @@ let dashboardSub = null;
 
 async function initDashboard() {
   try {
+    stopDashboard(); // Prevent subscription leaks
     initSupabase();
     if (!isLoggedIn) return;
 
@@ -235,7 +236,8 @@ function renderList(list, container) {
   }
 
   container.innerHTML = list.map(r => {
-    const id = r.id;
+    // Sanitize ID strictly to prevent XSS in onclick handlers
+    const id = String(r.id || '').replace(/[^a-zA-Z0-9-]/g, '');
     const door = escapeHtml(r.tipper_no);
     const mach = escapeHtml(r.machine);
     const problems = Array.isArray(r.problems) ? r.problems : [];

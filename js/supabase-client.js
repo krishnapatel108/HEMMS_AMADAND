@@ -318,6 +318,7 @@ async function archiveReport(reportId, monthKey) {
       if (idx !== -1) {
         reports[idx].archived_at = new Date().toISOString();
         reports[idx].archive_month = monthKey;
+        reports[idx].status = 'resolved';
         localStorage.setItem('hemm_mock_reports', JSON.stringify(reports));
         
         window.dispatchEvent(new StorageEvent('storage', {
@@ -334,6 +335,7 @@ async function archiveReport(reportId, monthKey) {
     const { data, error } = await SB
       .from('reports')
       .update({
+        status: 'resolved',
         archived_at: new Date().toISOString(),
         archive_month: monthKey,
       })

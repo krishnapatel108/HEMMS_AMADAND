@@ -138,9 +138,9 @@ window.addEventListener('offline', updateConnDot);
 async function loadWANumber() {
   try {
     if (typeof getConfig === 'function') {
-      const cfg = await getConfig();
-      if (cfg && cfg.whatsapp_number) {
-        waNumber = String(cfg.whatsapp_number).replace(/\D/g, '');
+      const { data } = await getConfig('whatsapp_number');
+      if (data && data.value) {
+        waNumber = String(data.value).replace(/\D/g, '');
       }
     }
   } catch (_) { /* non-critical */ }

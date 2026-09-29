@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="description" content="Standalone BEML 240T Dumper AI Preventive Maintenance System.">
+  <title>BEML 240T Dumper AI PM System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-hdr">
+    <div class="hdr-left">
+      <div class="logo-box">🟨</div>
+      <div>
+        <h1 class="logo-title">BEML 240T AI-PM SYSTEM</h1>
+        <div class="logo-subtitle"><span class="live-blink">●</span> AMADAND OPENCAST MINE · ENGINEERING DIVISION</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="kpi-avail">FLEET AVAILABILITY: <span id="fleet-avail-pct" class="avail-val">66%</span></div>
+    </div>
+  </header>
+
+  <!-- Sidebar Navigation Tabs -->
+  <div class="app-container">
+    <aside class="sidebar">
+      <nav class="side-nav">
+        <button class="nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">
+          <span class="nav-icon">📊</span> Fleet Availability
+        </button>
+        <button class="nav-btn" data-tab="telemetry" onclick="switchTab('telemetry')">
+          <span class="nav-icon">🔬</span> OEM Telemetry Desk
+        </button>
+        <button class="nav-btn" data-tab="operator" onclick="switchTab('operator')">
+          <span class="nav-icon">👷</span> Operator Shift Check
+        </button>
+        <button class="nav-btn" data-tab="copilot" onclick="switchTab('copilot')">
+          <span class="nav-icon">🤖</span> AI Diagnostics Co-Pilot
+        </button>
+        <button class="nav-btn" data-tab="breakdowns" onclick="switchTab('breakdowns')">
+          <span class="nav-icon">⚠️</span> Live Breakdown Log
+        </button>
+        <button class="nav-btn" data-tab="training" onclick="switchTab('training')">
+          <span class="nav-icon">🧠</span> AI Training Desk
+        </button>
+        <button class="nav-btn" data-tab="standards" onclick="switchTab('standards')">
+          <span class="nav-icon">📋</span> OEM Standard Sheet
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        © 2026 BEML 240T PM Workspace
+      </div>
+    </aside>
+
+    <!-- Main Workspace Panel Content -->
+    <main class="main-content">
+      
+      <!-- ================= TAB: FLEET AVAILABILITY ================= -->
+      <section class="tab-panel active" id="panel-dashboard">
+        <div class="dashboard-grid">
+          
+          <!-- Summary Cards -->
+          <div class="kpi-card-row">
+            <div class="kpi-card">
+              <div class="kpi-label">Active Fleet Size</div>
+              <div class="kpi-val" id="kpi-fleet-size">3</div>
+            </div>
+            <div class="kpi-card green">
+              <div class="kpi-label">Operational Dumpers</div>
+              <div class="kpi-val" id="kpi-fleet-ops">2</div>
+            </div>
+            <div class="kpi-card yellow">
+              <div class="kpi-label">Under PM Service</div>
+              <div class="kpi-val" id="kpi-fleet-pm">1</div>
+            </div>
+            <div class="kpi-card red">
+              <div class="kpi-label">Unscheduled Breakdown</div>
+              <div class="kpi-val" id="kpi-fleet-bd">0</div>
+            </div>
+          </div>
+
+          <!-- Fleet Health Cards Grid -->
+          <div class="fleet-section">
+            <h2 class="section-heading">Dumper Health Cards & RUL Projections</h2>
+            <div class="dumper-grid" id="dashboard-dumper-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Audit Log Timeline -->
+          <div class="fleet-section" style="margin-top: 20px;">
+            <h2 class="section-heading">DGMS Shift Compliance Audit Log</h2>
+            <div class="audit-table-wrapper">
+              <table class="audit-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Dumper No</th>
+                    <th>Operator (Form A)</th>
+                    <th>Critical Defect Flags</th>
+                    <th>Lube Leaks</th>
+                    <th>Compliance Status</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-logs-list">
+                  <!-- Dynamically populated from LocalStorage checks -->
+                  <tr>
+                    <td colspan="6" class="no-logs">No shift checks logged for this shift yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB: OEM TELEMETRY DESK ================= -->
+      <section class="tab-panel" id="panel-telemetry">
+        <div class="telemetry-panel-layout">
+          
+          <!-- Telemetry Control Header -->
+          <div class="telemetry-ctrl-card card">
+            <div class="ctrl-header">
+              <div class="dumper-badge">
+                Active Telemetry Feed: <span id="tel-feed-no">BD-2401</span>
+              </div>
+              <div class="smu-badge">
+                SMU Hours: <span id="tel-feed-smu">4820.50</span> hrs
+              </div>
+              <div class="engine-rpm-badge">
+                Engine RPM: <span id="tel-feed-rpm">720</span>
+              </div>
+            </div>
+            
+            <!-- Fault Injection preset controls -->
+            <div class="injector-section">
+              <span class="inj-lbl">⚠️ Trigger OEM Sensor Fault Presets:</span>
+              <div class="inj-buttons">
+                <button class="inj-btn active" id="inj-normal" onclick="triggerSimulatorFault('normal')">🟢 Normal Run</button>
+                <button class="inj-btn" id="inj-engine-hot" onclick="triggerSimulatorFault('engine-hot')">🔴 QSK60 Overheating</button>
+                <button class="inj-btn" id="inj-low-oil" onclick="triggerSimulatorFault('low-oil')">🔴 Sump Oil pressure drop</button>
+                <button class="inj-btn" id="inj-wheel-motor-hot" onclick="triggerSimulatorFault('wheel-motor-hot')">🟡 Left traction motor bearing wear</button>
+                <button class="inj-btn" id="inj-suspension-leak" onclick="triggerSimulatorFault('suspension-leak')">🟡 Strut gas leakage</button>
+                <button class="inj-btn" id="inj-grid-hot" onclick="triggerSimulatorFault('grid-hot')">🔴 Retarder blower failure</button>
+                <button class="inj-btn" id="inj-blowby-crit" onclick="triggerSimulatorFault('blowby-crit')">🔴 Blow-by & liner wear</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gauges Visual Grid -->
+          <div class="gauges-grid">
+            
+            <!-- Gauge: Oil Pressure -->
+            <div class="gauge-card card" id="gauge-oil-press">
+              <div class="gauge-title">Engine Oil Pressure</div>
+              <div class="gauge-value"><span id="val-oil-press">4.20</span> <span class="gauge-unit">bar</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-oil-press" style="width: 76%;"></div></div>
+              <div class="gauge-limits">Min: 3.5 | Max: 5.5</div>
+            </div>
+
+            <!-- Gauge: Coolant Temp -->
+            <div class="gauge-card card" id="gauge-coolant-temp">
+              <div class="gauge-title">Coolant Temperature</div>
+              <div class="gauge-value"><span id="val-coolant-temp">83.0</span> <span class="gauge-unit">°C</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-coolant-temp" style="width: 63%;"></div></div>
+              <div class="gauge-limits">Nominal: 80 - 92</div>
+            </div>
+
+            <!-- Gauge: Exhaust Temp -->
+            <div class="gauge-card card" id="gauge-exhaust-temp">
+              <div class="gauge-title">Exhaust Gas Temp</div>
+              <div class="gauge-value"><span id="val-exhaust-temp">475.0</span> <span class="gauge-unit">°C</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-exhaust-temp" style="width: 59%;"></div></div>
+              <div class="gauge-limits">Max: 550</div>
+            </div>
+
+            <!-- Gauge: Boost Pressure -->
+            <div class="gauge-card card" id="gauge-boost-press">
+              <div class="gauge-title">Turbo Boost Pressure</div>
+              <div class="gauge-value"><span id="val-boost-press">2.10</span> <span class="gauge-unit">bar</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-boost-press" style="width: 70%;"></div></div>
+              <div class="gauge-limits">Nominal: 2.0 - 2.8</div>
+            </div>
+
+            <!-- Gauge: Blow-by -->
+            <div class="gauge-card card" id="gauge-blowby-press">
+              <div class="gauge-title">Crankcase Blow-by</div>
+              <div class="gauge-value"><span id="val-blowby-press">1.50</span> <span class="gauge-unit">kPa</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-blowby-press" style="width: 12%;"></div></div>
+              <div class="gauge-limits">Alarm: 8.0 | Limit: 12.0</div>
+            </div>
+
+            <!-- Gauge: Alternator Voltage -->
+            <div class="gauge-card card" id="gauge-alt-volt">
+              <div class="gauge-title">GE Main Alternator Voltage</div>
+              <div class="gauge-value"><span id="val-alt-volt">750.0</span> <span class="gauge-unit">V</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-alt-volt" style="width: 71%;"></div></div>
+              <div class="gauge-limits">Nominal: 600 - 950</div>
+            </div>
+
+            <!-- Gauge: Left Traction Motor -->
+            <div class="gauge-card card" id="gauge-wheel-motor-l">
+              <div class="gauge-title">Left Wheel Motor Stator Temp</div>
+              <div class="gauge-value"><span id="val-wheel-motor-l">81.0</span> <span class="gauge-unit">°C</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-wheel-motor-l" style="width: 54%;"></div></div>
+              <div class="gauge-limits">Nominal: 75 - 90</div>
+            </div>
+
+            <!-- Gauge: Right Traction Motor -->
+            <div class="gauge-card card" id="gauge-wheel-motor-r">
+              <div class="gauge-title">Right Wheel Motor Stator Temp</div>
+              <div class="gauge-value"><span id="val-wheel-motor-r">82.0</span> <span class="gauge-unit">°C</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-wheel-motor-r" style="width: 55%;"></div></div>
+              <div class="gauge-limits">Nominal: 75 - 90</div>
+            </div>
+
+            <!-- Gauge: Resistor Grid -->
+            <div class="gauge-card card" id="gauge-grid-temp">
+              <div class="gauge-title">Dynamic Retarding Grid Temp</div>
+              <div class="gauge-value"><span id="val-grid-temp">90.0</span> <span class="gauge-unit">°C</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-grid-temp" style="width: 42%;"></div></div>
+              <div class="gauge-limits">Max Dynamic Brake: 150</div>
+            </div>
+
+            <!-- Gauge: Steering Pressure -->
+            <div class="gauge-card card" id="gauge-steering-press">
+              <div class="gauge-title">Hydraulic Pump Discharge</div>
+              <div class="gauge-value"><span id="val-steering-press">195.0</span> <span class="gauge-unit">bar</span></div>
+              <div class="gauge-bar-outer"><div class="gauge-bar-inner" id="bar-steering-press" style="width: 78%;"></div></div>
+              <div class="gauge-limits">Nominal: 180 - 210</div>
+            </div>
+
+          </div>
+
+          <!-- AI Diagnostic report sidebar -->
+          <div class="telemetry-diagnostic-card card">
+            <h2 class="card-heading">🤖 Real-Time AI Diagnostics Feed</h2>
+            <div class="ai-report-box" id="ai-realtime-diagnostics-output">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB: OPERATOR SHIFT CHECK ================= -->
+      <section class="tab-panel" id="panel-operator">
+        <div class="operator-panel-layout">
+          
+          <!-- Shift check sheet form -->
+          <div class="operator-form-card card">
+            <h2 class="card-heading">👷 Operator Pre-Start Shift Safety Form (DGMS Compliant)</h2>
+            <form id="operator-shift-form" onsubmit="submitOperatorForm(event)">
+              
+              <div class="form-inputs-row">
+                <div class="form-group">
+                  <label for="op-dumper-select">Dumper Number</label>
+                  <select id="op-dumper-select">
+                    <option value="BD-2401">BD-2401 (BH205E-AC)</option>
+                    <option value="BD-2402">BD-2402 (BH205E-AC)</option>
+                    <option value="BD-2403">BD-2403 (BH205E-AC)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="op-name">Operator Name</label>
+                  <input type="text" id="op-name" placeholder="Enter Operator Name" required>
+                </div>
+                <div class="form-group">
+                  <label for="op-forma">Form A Number</label>
+                  <input type="text" id="op-forma" placeholder="e.g. 511/A" required>
+                </div>
+              </div>
+
+              <div class="checklist-section">
+                <h3 class="chk-section-lbl">Physical & Mechanical Inspections:</h3>
+                
+                <div class="chk-item-group">
+                  <input type="checkbox" id="chk-leakage">
+                  <div>
+                    <label for="chk-leakage">Active Lubrication/Oil Dripping</label>
+                    <span class="chk-subtext">Check engine compartment, hydraulic hoist cylinder pins, and steering joints.</span>
+                  </div>
+                </div>
+
+                <div class="chk-item-group">
+                  <input type="checkbox" id="chk-tire">
+                  <div>
+                    <label for="chk-tire">Tire Cuts / Bead Ring Separation</label>
+                    <span class="chk-subtext">Inspect massive 37R57 tires for gashes or structural steel wire exposures.</span>
+                  </div>
+                </div>
+
+                <div class="chk-item-group">
+                  <input type="checkbox" id="chk-seatbelt">
+                  <div>
+                    <label for="chk-seatbelt">Seatbelt Warning Alarm Defect</label>
+                    <span class="chk-subtext">Select if seatbelt alarm is malfunctioning or seatbelt locking coil is loose.</span>
+                  </div>
+                </div>
+
+                <div class="chk-item-group">
+                  <input type="checkbox" id="chk-afdss">
+                  <div>
+                    <label for="chk-afdss">AFDSS Fire suppression gauge in Red</label>
+                    <span class="chk-subtext">Select if the pressure bottle gauges read outside the normal green margin.</span>
+                  </div>
+                </div>
+
+                <div class="chk-item-group">
+                  <input type="checkbox" id="chk-steering">
+                  <div>
+                    <label for="chk-steering">Steering sluggish or stiff at low idle</label>
+                    <span class="chk-subtext">Check steering responsiveness when crawling or backing to shovel loader face.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-submit-op">Submit Compliance Pre-Start Report</button>
+              </div>
+
+            </form>
+          </div>
+
+          <!-- Operator reporting logs card -->
+          <div class="operator-instructions-card card">
+            <h3 class="instr-title">ℹ️ Operator Checklist Compliance</h3>
+            <p class="instr-text">
+              Under **DGMS (Directorate General of Mines Safety) regulations**, every dumper operator must submit a shift safety checklist before starting machinery.
+              <br><br>
+              Our **AI Preventive Maintenance system** instantly joins these human-logged check sheets with **real-time OEM sensor readings**. 
+              <br><br>
+              *Example:* If an operator marks **"Steering sluggish or stiff"**, the AI cross-references this with the steering accumulator sensor values to isolate accumulator gas leaks, flagging a critical alarm even if the sensor values are just starting to decline.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB: AI DIAGNOSTICS CO-PILOT ================= -->
+      <section class="tab-panel" id="panel-copilot">
+        <div class="copilot-chat-container card">
+          <div class="chat-header">
+            <div class="chat-agent-info">
+              <span class="bot-avatar">🤖</span>
+              <div>
+                <h3 class="chat-agent-name">BEML 240T Maintenance Co-Pilot</h3>
+                <p class="chat-agent-desc">Trained on Cummins QSK60 Engine & GE AC Traction schematics</p>
+              </div>
+            </div>
+            <button class="chat-clear-btn" onclick="clearChat()">Clear History</button>
+          </div>
+
+          <div class="chat-messages" id="chat-messages-container">
+            <div class="chat-msg bot">
+              Welcome Engineer! I am your AI Diagnostics Co-Pilot. 
+              <br><br>
+              Ask me about maintenance troubleshooting protocols for BEML BH205E/BH240E dumpers:
+              <ul>
+                <li>"How to charge nitrogen in front suspension cylinders?"</li>
+                <li>"QSK60 low oil pressure fault code 415 troubleshooting"</li>
+                <li>"GE AC traction motor winding insulation test procedure"</li>
+                <li>"Steering stiff at low idle speed checks"</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="chat-presets-row">
+            <span class="preset-chat-lbl">Quick Ask:</span>
+            <button class="chat-preset-btn" onclick="sendQuickQuery('How to charge nitrogen in front suspension cylinders?')">⚙️ Suspension Gas Charging</button>
+            <button class="chat-preset-btn" onclick="sendQuickQuery('QSK60 low oil pressure fault code 415 troubleshooting')">🔧 Cummins Code 415</button>
+            <button class="chat-preset-btn" onclick="sendQuickQuery('GE AC traction motor winding insulation test procedure')">⚡ GE Traction Windings</button>
+            <button class="chat-preset-btn" onclick="sendQuickQuery('Steering stiff at low idle speed checks')">💧 Hydraulic Steering checks</button>
+          </div>
+
+          <div class="chat-input-row">
+            <input type="text" id="copilot-chat-input" placeholder="Ask about fault codes, sensor alerts, or BEML mechanical procedures..." onkeydown="handleChatKeyPress(event)">
+            <button class="chat-send-btn" onclick="submitChatMessage()">Ask Co-Pilot →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB: OEM STANDARD SHEET ================= -->
+      <section class="tab-panel" id="panel-standards">
+        <div class="standards-layout">
+          
+          <div class="standards-section card">
+            <h2 class="card-heading">📋 OEM Sensor Nominal Ranges & Alarm Levels</h2>
+            <table class="standards-table">
+              <thead>
+                <tr>
+                  <th>System</th>
+                  <th>Sensor Reading</th>
+                  <th>Nominal Range</th>
+                  <th>Warning Level</th>
+                  <th>Critical Level</th>
+                  <th>Unit</th>
+                </tr>
+              </thead>
+              <tbody id="standards-tbody">
+                <!-- Dynamically populated from kb.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="standards-section card" style="margin-top: 20px;">
+            <h2 class="card-heading">🔧 Cummins QSK60 Engine & GE AC Drive Fault Codes</h2>
+            <div class="fault-codes-reference">
+              <h3>Cummins INSITE Fault Reference:</h3>
+              <div class="fc-list" id="cummins-fc-ref-list">
+                <!-- Dynamically populated -->
+              </div>
+              <h3 style="margin-top: 20px;">GE AC Electric Drive Fault Reference:</h3>
+              <div class="fc-list" id="ge-fc-ref-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB: LIVE BREAKDOWN LOG ================= -->
+      <section class="tab-panel" id="panel-breakdowns">
+        <div class="breakdown-panel-layout">
+          
+          <!-- Left Column: Open Breakdowns and Log Form -->
+          <div class="breakdown-left-col">
+            
+            <!-- Form: Log New Incident -->
+            <div class="card" style="margin-bottom: 20px;">
+              <h2 class="card-heading">⚠️ Log New Breakdown Incident</h2>
+              <form id="new-breakdown-form" onsubmit="logNewBreakdown(event)">
+                <div class="form-inputs-row" style="grid-template-columns: 1fr 1fr; gap:12px;">
+                  <div class="form-group">
+                    <label for="bd-dumper-select">Select Dumper</label>
+                    <select id="bd-dumper-select">
+                      <!-- Filled dynamically -->
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="bd-system-select">Sub-System Affected</label>
+                    <select id="bd-system-select">
+                      <option value="Engine">Engine (Cummins QSK60)</option>
+                      <option value="Drive System">AC Drive System (GE/Wabtec)</option>
+                      <option value="Hydraulics">Hydraulics (Steering/Hoist)</option>
+                      <option value="Suspension">Suspension Struts</option>
+                      <option value="Structure">Chassis / Load Body</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-inputs-row" style="grid-template-columns: 1fr 1fr; margin-top: 12px; gap:12px;">
+                  <div class="form-group">
+                    <label for="bd-severity-select">Severity Level</label>
+                    <select id="bd-severity-select">
+                      <option value="Warning Alert">Warning Alert (Minor derate)</option>
+                      <option value="Shutdown">Shutdown Required (Engine Lockout)</option>
+                      <option value="Total Breakdown">Total Breakdown (Towed to Shop)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="bd-symptom-input">Primary Symptom</label>
+                    <input type="text" id="bd-symptom-input" placeholder="e.g. Engine blow-by high, retarder fan locked" required>
+                  </div>
+                </div>
+                <button type="submit" class="btn-submit-op" style="margin-top: 15px; padding: 12px; background: var(--status-crit); color:#fff; box-shadow:0 4px 14px rgba(239,68,68,0.15);">
+                  ⚠️ Log Active Breakdown
+                </button>
+              </form>
+            </div>
+
+            <!-- List: Active Incidents -->
+            <div class="card">
+              <h2 class="card-heading">🚨 Active Breakdown Incidents</h2>
+              <div id="active-breakdowns-container" class="active-incidents-list">
+                <!-- Dynamically populated -->
+                <div style="color:var(--txt-muted); text-align:center; padding: 20px; font-size:12px;">No active breakdowns logged.</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Timeline & Action Log -->
+          <div class="breakdown-right-col">
+            <div class="card timeline-card" id="timeline-workspace" style="display: none; height: 100%;">
+              <div class="timeline-workspace-header">
+                <div>
+                  <h2 class="card-heading" style="margin-bottom:2px;" id="timeline-dumper-no">BD-2401</h2>
+                  <span class="timeline-subtitle" id="timeline-symptom">Engine Coolant High</span>
+                </div>
+                <span class="timeline-badge critical" id="timeline-severity-badge">Shutdown</span>
+              </div>
+
+              <!-- Input: Post Minute Update -->
+              <div class="timeline-post-box">
+                <label for="timeline-note-input" style="font-size: 11px; font-weight:700; color:var(--txt-muted);">Post Minute-by-Minute Progress Update:</label>
+                <div style="display:flex; gap: 8px; margin-top: 5px;">
+                  <input type="text" id="timeline-note-input" placeholder="e.g. Cleaned fan shutters, testing coolant flow..." style="flex:1; padding: 10px; background: rgba(10,10,10,0.6); border:1px solid rgba(255,255,255,0.08); border-radius:8px; color:#fff; outline:none; font-size:12px;">
+                  <button class="btn-primary-sm" style="background:var(--beml-gold); color:#000; padding:10px 14px; border:none; border-radius:8px;" onclick="submitTimelineUpdate()">Post Update</button>
+                </div>
+              </div>
+
+              <!-- Scrolling Timeline Feed -->
+              <div class="timeline-feed-container" id="timeline-feed-list">
+                <!-- Loaded dynamically -->
+              </div>
+
+              <!-- Resolution panel inside workspace -->
+              <div class="timeline-resolution-box" style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
+                <h3 style="font-size:12px; font-weight:800; color:var(--status-ok); margin-bottom:8px;">Refit/Consumables Replaced during Resolution:</h3>
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <div style="display:flex; flex-wrap:wrap; gap:12px;">
+                    <label class="parts-checkbox"><input type="checkbox" id="part-oil"> Engine Oil (250h Oil reset)</label>
+                    <label class="parts-checkbox"><input type="checkbox" id="part-filters"> Air Filters (500h Air filter reset)</label>
+                    <label class="parts-checkbox"><input type="checkbox" id="part-tires"> 37R57 Tires (Tread reset)</label>
+                    <label class="parts-checkbox"><input type="checkbox" id="part-windings"> Motor Windings (15kh drive reset)</label>
+                  </div>
+                </div>
+                <button class="btn-success-lg" style="width: 100%; padding: 12px; font-size: 13px;" onclick="resolveActiveBreakdown()">
+                  Complete Repairs & Reset RUL
+                </button>
+              </div>
+            </div>
+
+            <!-- Empty State Workspace -->
+            <div class="card empty-timeline-card" id="timeline-empty-workspace" style="display: flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; color:var(--txt-muted); min-height: 380px;">
+              <span style="font-size: 40px; margin-bottom:12px;">🛠️</span>
+              <h3>No Dumper Selected</h3>
+              <p style="font-size:12px; margin-top:4px;">Select an active breakdown from the left list to view or add minute-by-minute repair updates.</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB: AI MODEL TRAINING ================= -->
+      <section class="tab-panel" id="panel-training">
+        <div class="training-panel-layout">
+          
+          <!-- Left Column: Data Input and Controls -->
+          <div class="training-left-col">
+            <div class="card">
+              <h2 class="card-heading">🧠 Machine Learning Model Training Console</h2>
+              <p class="card-desc" style="font-size: 11px; color: var(--txt-muted); margin-bottom: 15px; line-height: 1.5;">
+                Upload or paste 1-year historical breakdown logs (CSV format) to compile a Gaussian Naive Bayes classifier in-browser. The trained model will override/supplement static sensor thresholds using probability correlation.
+              </p>
+              
+              <div class="form-group" style="margin-bottom: 15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                  <label for="csv-input" style="font-size: 11px; font-weight:700; color:var(--txt-muted);">Paste Historical Breakdown Data (CSV):</label>
+                  <button type="button" class="btn-primary-sm" style="background: rgba(241,196,15,0.1); color: var(--beml-gold); border: 1px solid rgba(241,196,15,0.3); padding: 4px 10px; border-radius: 6px; font-size:10px; cursor:pointer;" onclick="loadSampleCSV()">Load Sample 1-Yr Data</button>
+                </div>
+                <textarea id="csv-input" placeholder="dumper_no,fault_system,operator_stiff_steering,operator_oil_dripping,operator_tire_damage,operator_afdss_red,engine_oil_pressure,engine_coolant_temp,engine_exhaust_temp,turbo_boost_pressure,crankcase_blowby,main_alternator_voltage,wheel_motor_temp_l,wheel_motor_temp_r,retarder_grid_temp,hydraulic_pump_pressure,steering_accumulator_pressure,suspension_pressure_front,suspension_pressure_rear" style="width: 100%; height: 200px; font-family: monospace; font-size: 10px; background: rgba(10,10,10,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; color: #eee; resize: vertical; outline:none; line-height: 1.4;"></textarea>
+              </div>
+
+              <!-- Reliability / Confidence filter -->
+              <div class="form-group" style="margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom: 6px;">
+                  <label for="reliability-slider" style="font-weight:700;">Reliability / Confidence Filter Threshold:</label>
+                  <span style="color:var(--beml-gold); font-weight:800;" id="reliability-slider-val">60%</span>
+                </div>
+                <input type="range" id="reliability-slider" min="30" max="95" value="60" step="5" style="width:100%; accent-color: var(--beml-gold); cursor:pointer;" oninput="updateReliabilitySliderVal(this.value)">
+                <span class="chk-subtext" style="display:block; margin-top:4px;">Warnings will only trigger if the AI model matches a system failure with a probability greater than or equal to this threshold.</span>
+              </div>
+
+              <button type="button" class="btn-submit-op" style="padding: 12px; background: var(--beml-gold); color:#000; font-weight:800; width:100%; box-shadow: 0 4px 14px rgba(241,196,15,0.15); border:none; border-radius:8px; cursor:pointer;" onclick="trainAIModel()">
+                ⚡ Train Model & Sync Live Stream
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: Training Diagnostics -->
+          <div class="training-right-col">
+            
+            <!-- Summary stats -->
+            <div class="card" style="margin-bottom: 20px;">
+              <h2 class="card-heading">📊 Model Diagnostics & Evaluation</h2>
+              <div class="kpi-card-row" style="grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; margin-bottom:0;">
+                <div class="kpi-card" style="padding: 10px 12px; text-align:center; border-radius:12px;">
+                  <div class="kpi-label" style="font-size:9px;">Accuracy</div>
+                  <div class="kpi-val" id="model-accuracy-val" style="font-size:20px;">--</div>
+                </div>
+                <div class="kpi-card green" style="padding: 10px 12px; text-align:center; border-radius:12px;">
+                  <div class="kpi-label" style="font-size:9px;">Precision</div>
+                  <div class="kpi-val" id="model-precision-val" style="font-size:20px;">--</div>
+                </div>
+                <div class="kpi-card yellow" style="padding: 10px 12px; text-align:center; border-radius:12px;">
+                  <div class="kpi-label" style="font-size:9px;">Recall</div>
+                  <div class="kpi-val" id="model-recall-val" style="font-size:20px;">--</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confusion Matrix -->
+            <div class="card" style="margin-bottom: 20px;">
+              <h2 class="card-heading">🎯 Confusion Matrix (Actual vs Predicted)</h2>
+              <div class="matrix-table-wrapper" style="margin-top: 12px; overflow-x: auto;">
+                <table class="matrix-table" style="width: 100%; border-collapse:collapse; text-align:center; font-size:11px;">
+                  <thead>
+                    <tr>
+                      <th style="border:none;"></th>
+                      <th colspan="5" style="border-bottom:1px solid rgba(255,255,255,0.1); padding: 4px; font-weight:700; color:var(--beml-gold);">Predicted Class</th>
+                    </tr>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.06); color: var(--txt-muted);">
+                      <th style="font-weight:700; text-align:left; padding:6px;">Actual Class</th>
+                      <th style="padding:6px;">Engine</th>
+                      <th style="padding:6px;">Drive</th>
+                      <th style="padding:6px;">Hydraulics</th>
+                      <th style="padding:6px;">Suspension</th>
+                      <th style="padding:6px;">Normal</th>
+                    </tr>
+                  </thead>
+                  <tbody id="confusion-matrix-tbody">
+                    <tr>
+                      <td colspan="6" style="padding: 15px; color:var(--txt-muted); font-size:11px;">Model not trained yet. Load data and run training.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Learned Correlations -->
+            <div class="card" style="flex:1;">
+              <h2 class="card-heading">📖 Extracted Correlation Logic (Learned Rules)</h2>
+              <div id="learned-rules-container" style="max-height: 160px; overflow-y:auto; font-size: 11px; margin-top:10px; color:#ddd; line-height:1.6;">
+                <div style="color:var(--txt-muted); padding: 10px 0;">Run model training to extract diagnostic rule weights.</div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Load scripts -->
+  <script src="js/kb.js"></script>
+  <script src="js/sensor-simulator.js"></script>
+  <script src="js/ai-engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

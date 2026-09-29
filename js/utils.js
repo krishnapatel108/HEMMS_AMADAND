@@ -152,9 +152,18 @@ function getStoredReport(key) {
 
 // ── UUID v4 generator (fallback if crypto not available) ─────
 function uuid4() {
-  if (crypto && crypto.randomUUID) return crypto.randomUUID();
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0;
+    let r;
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const arr = new Uint8Array(1);
+      crypto.getRandomValues(arr);
+      r = arr[0] % 16 | 0;
+    } else {
+      r = Math.random() * 16 | 0;
+    }
     return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
   });
 }
